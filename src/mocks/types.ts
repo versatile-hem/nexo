@@ -5,6 +5,7 @@ export interface Product {
   id: string;
   name: string;
   sku: string;
+  barcode?: string;
   price: number;
   stock: number;
   category: string;
@@ -39,6 +40,15 @@ export interface StockMovement {
   date: string;
 }
 
+export interface StockInEntry {
+  id: string;
+  productId: string;
+  productName: string;
+  qty: number;
+  receivedAt: string;
+  note?: string;
+}
+
 export interface InvoiceLineItem {
   productId: string;
   description: string;
@@ -62,18 +72,20 @@ export interface Invoice {
   total: number;
 }
 
-export type SalesChannel = "Meesho" | "Flipkart" | "Amazon";
+export type SalesChannel = "Meesho" | "Flipkart" | "Amazon" | "Offline";
 export type DailyOpsUnit = "nos" | "box" | "packet";
 
 export interface ProductOption {
   id: string;
   name: string;
   sku: string;
+  barcode?: string;
 }
 
 interface DailyOpsBaseRow {
   productId?: string;
   productName: string;
+  barcode?: string;
   qty: number;
   unit: DailyOpsUnit;
 }

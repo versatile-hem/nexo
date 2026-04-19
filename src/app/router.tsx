@@ -1,10 +1,12 @@
 import { Navigate, createBrowserRouter } from "react-router-dom";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { DashboardPage } from "@/features/dashboard/DashboardPage";
+import { OperationDashboard } from "@/features/dashboard/OperationDashboard";
 import { LoginPage } from "@/features/auth/pages/LoginPage";
 import { ProductListPage } from "@/features/inventory/pages/ProductListPage";
 import { ProductFormPage } from "@/features/inventory/pages/ProductFormPage";
 import { StockMovementsPage } from "@/features/inventory/pages/StockMovementsPage";
+import { StockInPage } from "@/features/inventory/pages/StockInPage";
 import { BatchTrackingPage } from "@/features/inventory/pages/BatchTrackingPage";
 import { DailyOperationsPage } from "@/features/inventory/pages/DailyOperationsPage";
 import { InvoiceListPage } from "@/features/billing/pages/InvoiceListPage";
@@ -15,10 +17,10 @@ import { OrderListPage } from "@/features/orders/pages/OrderListPage";
 import { ReturnHandlingPage } from "@/features/orders/pages/ReturnHandlingPage";
 import { ReportsPage } from "@/features/dashboard/ReportsPage";
 import { SettingsPage } from "@/features/dashboard/SettingsPage";
-import { RequireRole } from "@/app/routeGuards";
 import { UnauthorizedPage } from "@/features/dashboard/UnauthorizedPage";
 import { ProtectedRoute } from "@/routes/ProtectedRoute";
 import { useAuthStore } from "@/store/authStore";
+import { isAdmin } from "@/utils/roleUtils";
 
 export const appRouter = createBrowserRouter([
   { path: "/login", element: <LoginPage /> },
@@ -31,27 +33,105 @@ export const appRouter = createBrowserRouter([
       </ProtectedRoute>
     ),
     children: [
-      { path: "dashboard", element: <DashboardPage /> },
-      { path: "products", element: <ProductListPage /> },
-      { path: "products/new", element: <ProductFormPage /> },
-      { path: "inventory/batch", element: <BatchTrackingPage /> },
-      { path: "inventory", element: <Navigate to="/inventory/stock-movements" replace /> },
-      { path: "inventory/stock-movements", element: <StockMovementsPage /> },
+      { path: "dashboard", element: <RoleAwareDashboard /> },
+      {
+        path: "products",
+        element: (
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <ProductListPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "products/new",
+        element: (
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <ProductFormPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "inventory/batch",
+        element: (
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <BatchTrackingPage />
+          </ProtectedRoute>
+        ),
+      },
+      { path: "inventory", element: <InventoryRootRedirect /> },
+      {
+        path: "inventory/stock-movements",
+        element: (
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <StockMovementsPage />
+          </ProtectedRoute>
+        ),
+      },
+      { path: "inventory/stock-in", element: <StockInPage /> },
       { path: "inventory/daily-operations", element: <DailyOperationsPage /> },
-      { path: "billing", element: <InvoiceListPage /> },
-      { path: "billing/create-invoice", element: <CreateInvoicePage /> },
+      {
+        path: "billing",
+        element: (
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <InvoiceListPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "billing/create-invoice",
+        element: (
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <CreateInvoicePage />
+          </ProtectedRoute>
+        ),
+      },
       { path: "billing/new", element: <Navigate to="/billing/create-invoice" replace /> },
-      { path: "orders", element: <OrderListPage /> },
-      { path: "orders/returns", element: <ReturnHandlingPage /> },
-      { path: "customers", element: <CustomerListPage /> },
-      { path: "customers/:customerId", element: <CustomerProfilePage /> },
-      { path: "reports", element: <ReportsPage /> },
+      {
+        path: "orders",
+        element: (
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <OrderListPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "orders/returns",
+        element: (
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <ReturnHandlingPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "customers",
+        element: (
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <CustomerListPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "customers/:customerId",
+        element: (
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <CustomerProfilePage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "reports",
+        element: (
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <ReportsPage />
+          </ProtectedRoute>
+        ),
+      },
       {
         path: "settings",
         element: (
-          <RequireRole allowedRoles={["admin"]}>
+          <ProtectedRoute allowedRoles={["admin"]}>
             <SettingsPage />
-          </RequireRole>
+          </ProtectedRoute>
         ),
       },
       { path: "unauthorized", element: <UnauthorizedPage /> },
@@ -64,4 +144,14 @@ export const appRouter = createBrowserRouter([
 function RootRedirect() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   return <Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace />;
+}
+
+function RoleAwareDashboard() {
+  const role = useAuthStore((state) => state.role);
+  return isAdmin(role) ? <DashboardPage /> : <OperationDashboard />;
+}
+
+function InventoryRootRedirect() {
+  const role = useAuthStore((state) => state.role);
+  return <Navigate to={isAdmin(role) ? "/inventory/stock-movements" : "/inventory/stock-in"} replace />;
 }

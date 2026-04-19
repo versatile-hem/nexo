@@ -1,4 +1,4 @@
-export type AuthRole = "admin" | "manager" | "staff";
+export type AuthRole = "admin" | "operation_manager";
 
 export interface AuthUser {
   id: number;
@@ -14,32 +14,44 @@ interface LoginResponse extends AuthUser {
 const AUTH_USER_KEY = "nexo-auth-user";
 const AUTH_TOKEN_KEY = "nexo-auth-token";
 
-const MOCK_CREDENTIALS = {
-  email: "admin@nexo.com",
-  password: "admin123",
-};
-
-const MOCK_USER: AuthUser = {
-  id: 1,
-  name: "Admin User",
-  email: "admin@nexo.com",
-  role: "admin",
+const MOCK_USERS: Record<string, { password: string; user: AuthUser }> = {
+  "admin@nexo.com": {
+    password: "admin123",
+    user: {
+      id: 1,
+      name: "Admin User",
+      email: "admin@nexo.com",
+      role: "admin",
+    },
+  },
+  "ops@nexo.com": {
+    password: "ops123",
+    user: {
+      id: 2,
+      name: "Ops Manager",
+      email: "ops@nexo.com",
+      role: "operation_manager",
+    },
+  },
 };
 
 export const authService = {
   login: async (email: string, password: string): Promise<LoginResponse> => {
     await delay(450);
 
-    if (email.toLowerCase().trim() !== MOCK_CREDENTIALS.email || password !== MOCK_CREDENTIALS.password) {
+    const normalizedEmail = email.toLowerCase().trim();
+    const account = MOCK_USERS[normalizedEmail];
+
+    if (!account || password !== account.password) {
       throw new Error("Invalid credentials");
     }
 
     const payload: LoginResponse = {
-      ...MOCK_USER,
+      ...account.user,
       token: "mock-jwt-token",
     };
 
-    localStorage.setItem(AUTH_USER_KEY, JSON.stringify(MOCK_USER));
+    localStorage.setItem(AUTH_USER_KEY, JSON.stringify(account.user));
     localStorage.setItem(AUTH_TOKEN_KEY, payload.token);
 
     return payload;

@@ -15,13 +15,13 @@ export function DashboardLayout() {
         <Sidebar collapsed={collapsed} />
       </div>
       <main className="w-full p-4 md:p-6">
-        <div className="mb-3 print:hidden">
+        <div className="relative z-50 mb-3 print:hidden">
           <Button variant="ghost" onClick={toggle} className="mb-2">
             <Menu size={16} />
           </Button>
           <Topbar />
         </div>
-        <section className="fade-in">
+        <section className="relative z-0 fade-in">
           <Outlet />
         </section>
       </main>
