@@ -1,12 +1,14 @@
 import { ProductOption } from "@/mocks/types";
-import { mockResponse } from "@/services/api";
-
-const mockCatalog: ProductOption[] = [
-  { id: "1", name: "Ebook", sku: "EBK-01" },
-  { id: "2", name: "Pink potty seat non foldable", sku: "PPS-01" },
-  { id: "3", name: "Electric socket white 12 vale", sku: "ES-12" },
-];
+import { productsApi } from "@/services/productsApi";
 
 export const productService = {
-  getProducts: () => mockResponse([...mockCatalog]),
+  getProducts: async (): Promise<ProductOption[]> => {
+    const products = await productsApi.list();
+    return products.map((item) => ({
+      id: item.id,
+      name: item.name,
+      sku: item.sku,
+      barcode: item.barcode,
+    }));
+  },
 };

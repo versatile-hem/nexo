@@ -1,19 +1,34 @@
 import axios from "axios";
+import { AUTH_TOKEN_KEY } from "@/services/authService";
+import { mapHttpError } from "@/services/httpErrors";
 
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL ?? "/api",
-  timeout: 4000,
+  timeout: 10000,
 });
 
 api.interceptors.request.use((config) => {
-  config.headers.set("x-tenant-id", "demo-tenant");
-  config.headers.set("x-role", "admin");
+  const token = localStorage.getItem(AUTH_TOKEN_KEY);
+  if (token) {
+    config.headers.set("Authorization", `Bearer ${token}`);
+  }
   return config;
 });
 
 api.interceptors.response.use(
   (response) => response,
-  (error) => Promise.reject(error),
+  (error) => {
+    if (error?.response?.status === 401) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("nexo-auth-user");
+      localStorage.removeItem("nexo-auth-store");
+      if (window.location.pathname !== "/login") {
+        window.location.href = "/login";
+      }
+    }
+
+    return Promise.reject(mapHttpError(error));
+  },
 );
 
 export function mockResponse<T>(data: T, delay = 300): Promise<T> {

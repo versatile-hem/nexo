@@ -32,7 +32,6 @@ export function LoginPage() {
           <div className="mt-6">
             <LoginForm />
           </div>
-          <p className="mt-4 text-xs opacity-60">Use admin@nexo.com / admin123 for demo access.</p>
         </Card>
       </section>
     </main>

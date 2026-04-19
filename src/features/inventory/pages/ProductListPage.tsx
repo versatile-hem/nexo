@@ -9,6 +9,10 @@ import { EmptyState, ErrorState } from "@/components/shared/States";
 import { inventoryService } from "@/services/inventoryService";
 import { exportToCsv, formatCurrency } from "@/utils/format";
 import { Product } from "@/mocks/types";
+import { isAdmin } from "@/utils/roleUtils";
+import { useAuthStore } from "@/store/authStore";
+import { productsApi } from "@/services/productsApi";
+import { ApiError } from "@/services/httpErrors";
 
 type SortKey = "name" | "price" | "stock";
 type SortDir = "asc" | "desc";
@@ -23,8 +27,23 @@ export function ProductListPage() {
   const dir = (searchParams.get("dir") as SortDir) ?? "asc";
 
   const [selectedId, setSelectedId] = useState<string | undefined>();
+  const [barcode, setBarcode] = useState("");
+  const role = useAuthStore((state) => state.role);
+  const admin = isAdmin(role);
   const queryClient = useQueryClient();
   const productsQuery = useQuery({ queryKey: ["products"], queryFn: inventoryService.getProducts, refetchInterval: 9000 });
+
+  const barcodeLookup = useMutation({
+    mutationFn: (value: string) => productsApi.getByBarcode(value),
+    onSuccess: (product) => {
+      setSelectedId(product.id);
+      toast.success(`Found ${product.name}`);
+    },
+    onError: (error) => {
+      const message = error instanceof ApiError ? error.message : "Barcode lookup failed";
+      toast.error(message);
+    },
+  });
 
   const stockMutation = useMutation({
     mutationFn: ({ productId, type, qty }: { productId: string; type: "IN" | "OUT"; qty: number }) =>
@@ -51,7 +70,10 @@ export function ProductListPage() {
   const pagedRows = rows.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   if (productsQuery.error) {
-    return <ErrorState message="Could not fetch products" onRetry={() => productsQuery.refetch()} />;
+    const message = productsQuery.error instanceof ApiError && productsQuery.error.code === "FORBIDDEN"
+      ? "Access denied. Your role cannot view products right now."
+      : "Could not fetch products";
+    return <ErrorState message={message} onRetry={() => productsQuery.refetch()} />;
   }
 
   const onFilterChange = (value: string) => {
@@ -94,12 +116,28 @@ export function ProductListPage() {
         <h2 className="text-lg font-semibold">Product List</h2>
         <div className="flex gap-2">
           <Button variant="secondary" onClick={() => exportToCsv("products.csv", rows)}>Export CSV</Button>
-          <Link to="/products/new"><Button>Add Product</Button></Link>
+          {admin ? <Link to="/products/new"><Button>Add Product</Button></Link> : null}
         </div>
       </div>
 
-      <div className="mb-4 flex gap-2">
+      <div className="mb-3 flex gap-2">
         <Input placeholder="Filter by name, SKU, category" value={filter} onChange={(e) => onFilterChange(e.target.value)} />
+      </div>
+
+      <div className="mb-4 flex flex-wrap gap-2">
+        <Input
+          placeholder="Scan or enter barcode"
+          value={barcode}
+          onChange={(e) => setBarcode(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && barcode.trim()) {
+              barcodeLookup.mutate(barcode.trim());
+            }
+          }}
+        />
+        <Button variant="secondary" disabled={!barcode.trim() || barcodeLookup.isPending} onClick={() => barcodeLookup.mutate(barcode.trim())}>
+          {barcodeLookup.isPending ? "Looking up..." : "Lookup Barcode"}
+        </Button>
       </div>
 
       {rows.length === 0 ? (
@@ -135,9 +173,21 @@ export function ProductListPage() {
                   <td className="p-2">{product.category}</td>
                   <td className="p-2">
                     <div className="flex gap-2">
-                      <Button variant="secondary" onClick={() => stockMutation.mutate({ productId: product.id, type: "IN", qty: 1 })}>+1</Button>
-                      <Button variant="ghost" onClick={() => stockMutation.mutate({ productId: product.id, type: "OUT", qty: 1 })}>-1</Button>
-                      <Button variant="ghost" onClick={() => setSelectedId(product.id)}>Details</Button>
+                      {admin ? <Button variant="secondary" onClick={() => stockMutation.mutate({ productId: product.id, type: "IN", qty: 1 })}>+1</Button> : null}
+                      {admin ? (
+                        <Button
+                          variant="ghost"
+                          onClick={() => {
+                            if (window.confirm("Reduce stock by 1 unit?")) {
+                              stockMutation.mutate({ productId: product.id, type: "OUT", qty: 1 });
+                            }
+                          }}
+                        >
+                          -1
+                        </Button>
+                      ) : null}
+                      <Link to={`/products/${product.id}`}><Button variant="ghost">Details</Button></Link>
+                      {admin ? <Link to={`/products/${product.id}/edit`}><Button variant="ghost">Edit</Button></Link> : null}
                     </div>
                   </td>
                 </tr>
@@ -181,6 +231,7 @@ function RowDetails({ product }: { product?: Product }) {
       <p className="opacity-70">SKU: {product.sku}</p>
       <p className="opacity-70">Batch: {product.batchCode ?? "Not assigned"}</p>
       <div className="mt-2 flex gap-3">
+        <Link className="text-nexo-accent underline" to={`/products/${product.id}`}>Open Product Details</Link>
         <Link className="text-nexo-accent underline" to="/inventory/stock-movements">View Stock Movements</Link>
         <Link className="text-nexo-accent underline" to="/inventory/batch">Open Batch Tracking</Link>
       </div>

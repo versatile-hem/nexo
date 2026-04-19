@@ -10,16 +10,21 @@ import { useDailyOpsStore } from "@/store/dailyOpsStore";
 import { dailyOpsService } from "@/services/dailyOpsService";
 import { inventoryService } from "@/services/inventoryService";
 import { productService } from "@/services/productService";
+import { stockInService } from "@/services/stockInService";
+import { operationsApi } from "@/services/operationsApi";
 import { OrdersTable } from "@/features/inventory/components/OrdersTable";
 import { ReturnsTable } from "@/features/inventory/components/ReturnsTable";
+import { useIsMobile } from "@/hooks/useIsMobile";
+import { MobileDailyOperations } from "@/features/inventory/mobile/MobileDailyOperations";
 
-const channels: SalesChannel[] = ["Meesho", "Flipkart", "Amazon"];
+const channels: SalesChannel[] = ["Meesho", "Flipkart", "Amazon", "Offline"];
 
 type Focusable = HTMLInputElement | HTMLButtonElement | null;
 
 type SectionKey = "orders" | "returns";
 
 export function DailyOperationsPage() {
+  const isMobile = useIsMobile();
   const queryClient = useQueryClient();
   const { data: products = [], isLoading: productsLoading } = useQuery({
     queryKey: ["product-catalog"],
@@ -44,6 +49,7 @@ export function DailyOperationsPage() {
   } = useDailyOpsStore();
 
   const [rawInput, setRawInput] = useState("Shadowfax=46 ebook\nVolmo=113 ebook");
+  const [updatedBalances, setUpdatedBalances] = useState<Array<{ productId: string; quantity: number }>>([]);
   const refs = useRef<Record<string, Focusable>>({});
 
   const summary = useMemo(() => {
@@ -72,6 +78,11 @@ export function DailyOperationsPage() {
 
   const saveMutation = useMutation({
     mutationFn: async () => {
+      const hasStockIn = await stockInService.hasStockInForDate(date);
+      if (!hasStockIn) {
+        throw new Error("Stock In is required before daily operations. Please add incoming stock first.");
+      }
+
       const stockProducts = await inventoryService.getProducts();
       const byId = new Map(stockProducts.map((item) => [item.id, item]));
       const byName = new Map(stockProducts.map((item) => [normalize(item.name), item]));
@@ -91,19 +102,30 @@ export function DailyOperationsPage() {
         throw new Error(`Unknown products: ${unknown.map((item) => item.productName).join(", ")}`);
       }
 
-      await Promise.all(
-        cleanOrders.map((row) => {
+      const operationResults = await Promise.all([
+        ...cleanOrders.map((row) => {
           const product = resolveStockProduct(row, byId, byName)!;
-          return inventoryService.updateStock(product.id, "OUT", row.qty);
+          return operationsApi.dailyOperation({
+            type: "ORDER",
+            productId: product.id,
+            quantity: row.qty,
+            unit: row.unit,
+            courier: row.courier,
+            channel,
+          });
         }),
-      );
-
-      await Promise.all(
-        cleanReturns.map((row) => {
+        ...cleanReturns.map((row) => {
           const product = resolveStockProduct(row, byId, byName)!;
-          return inventoryService.updateStock(product.id, "IN", row.qty);
+          return operationsApi.dailyOperation({
+            type: "RETURN",
+            productId: product.id,
+            quantity: row.qty,
+            unit: row.unit,
+            courier: row.courier,
+            channel,
+          });
         }),
-      );
+      ]);
 
       await dailyOpsService.saveDailyReport({
         date,
@@ -111,9 +133,12 @@ export function DailyOperationsPage() {
         orders: cleanOrders,
         returns: cleanReturns,
       });
+
+      return operationResults;
     },
-    onSuccess: () => {
+    onSuccess: (results) => {
       toast.success("Daily operations saved and stock updated.");
+      setUpdatedBalances(results ?? []);
       queryClient.invalidateQueries({ queryKey: ["products"] });
       queryClient.invalidateQueries({ queryKey: ["stock-movements"] });
       queryClient.invalidateQueries({ queryKey: ["daily-reports"] });
@@ -153,6 +178,43 @@ export function DailyOperationsPage() {
 
   const channelOptions = channels.map((item) => ({ value: item, label: item }));
 
+  const handleSave = () => {
+    const hasOrders = sanitizeOrders(orders).length > 0;
+    if (hasOrders && !window.confirm("Proceed with ORDER entries? This will reduce stock quantities.")) {
+      return;
+    }
+    saveMutation.mutate();
+  };
+
+  if (isMobile) {
+    return (
+      <MobileDailyOperations
+        date={date}
+        channel={channel}
+        channelOptions={channelOptions}
+        orders={orders}
+        returns={returns}
+        products={products}
+        productsLoading={productsLoading}
+        rawInput={rawInput}
+        parseLoading={parseMutation.isPending}
+        saveLoading={saveMutation.isPending}
+        summary={summary}
+        onDateChange={setDate}
+        onChannelChange={setChannel}
+        onParseInputChange={setRawInput}
+        onParse={() => parseMutation.mutate(rawInput)}
+        onSave={handleSave}
+        onAddOrderRow={addOrderRow}
+        onAddReturnRow={addReturnRow}
+        onUpdateOrderRow={updateOrderRow}
+        onUpdateReturnRow={updateReturnRow}
+        onDeleteOrderRow={removeOrderRow}
+        onDeleteReturnRow={removeReturnRow}
+      />
+    );
+  }
+
   return (
     <div className="grid gap-4 xl:grid-cols-[1fr_320px]">
       <div className="space-y-4">
@@ -172,7 +234,7 @@ export function DailyOperationsPage() {
               />
             </div>
 
-            <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>
+            <Button onClick={handleSave} disabled={saveMutation.isPending}>
               {saveMutation.isPending ? "Saving..." : "Save Daily Report"}
             </Button>
           </div>
@@ -236,6 +298,21 @@ export function DailyOperationsPage() {
           <SummaryRow label="Total Orders Quantity" value={summary.totalOrdersQty} />
           <SummaryRow label="Total Returns Quantity" value={summary.totalReturnsQty} />
           <SummaryRow label="Net Stock Impact" value={summary.netStockImpact} emphasized />
+        </div>
+
+        <div className="mt-5">
+          <h4 className="text-sm font-semibold">Updated Inventory Balance</h4>
+          {updatedBalances.length === 0 ? (
+            <p className="mt-2 text-xs opacity-70">Save a daily operation to view balance response.</p>
+          ) : (
+            <ul className="mt-2 space-y-2">
+              {updatedBalances.map((item, idx) => (
+                <li key={`${item.productId}-${idx}`} className="rounded-md border border-black/10 px-2 py-1 text-xs dark:border-white/20">
+                  Product {item.productId}: <span className="font-semibold">{item.quantity}</span>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       </Card>
     </div>

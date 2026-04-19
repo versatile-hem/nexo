@@ -51,6 +51,7 @@ export function InvoicePreview({
             <p className="font-semibold">{customer?.name ?? "-"}</p>
             <p className="opacity-80">{customer?.billingAddress ?? "-"}</p>
             <p className="opacity-80">GSTIN: {customer?.gstin ?? "-"}</p>
+            <p className="opacity-80">Phone: {customer?.phone ?? "-"}</p>
             <p className="opacity-80">State: {customer?.state ?? "-"}</p>
           </div>
           <div className="md:text-right">

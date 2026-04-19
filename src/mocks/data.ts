@@ -1,13 +1,13 @@
-import { Customer, DailyReport, Invoice, Order, Product, StockMovement } from "@/mocks/types";
+import { Customer, DailyReport, Invoice, Order, Product, StockInEntry, StockMovement } from "@/mocks/types";
 
 export const mockProducts: Product[] = [
-  { id: "p-1", name: "Premium Coffee Beans", sku: "SKU-1001", price: 18.5, stock: 42, category: "Groceries", batchCode: "LOT-A11" },
-  { id: "p-2", name: "Portable Scanner", sku: "SKU-1002", price: 210, stock: 8, category: "Electronics", batchCode: "LOT-B14" },
-  { id: "p-3", name: "Thermal Printer", sku: "SKU-1003", price: 126, stock: 14, category: "Hardware", batchCode: "LOT-C02" },
-  { id: "p-4", name: "Warehouse Labels", sku: "SKU-1004", price: 9.75, stock: 4, category: "Supplies", batchCode: "LOT-L07" },
-  { id: "1", name: "Ebook", sku: "EBK-01", price: 3.5, stock: 300, category: "Digital", batchCode: "LOT-E01" },
-  { id: "2", name: "Pink potty seat non foldable", sku: "PPS-01", price: 22, stock: 55, category: "Kids", batchCode: "LOT-PPS" },
-  { id: "3", name: "Electric socket white 12 vale", sku: "ES-12", price: 6.75, stock: 120, category: "Hardware", batchCode: "LOT-ES12" },
+  { id: "p-1", name: "Premium Coffee Beans", sku: "SKU-1001", barcode: "8901111111111", price: 18.5, stock: 42, category: "Groceries", batchCode: "LOT-A11" },
+  { id: "p-2", name: "Portable Scanner", sku: "SKU-1002", barcode: "8902222222222", price: 210, stock: 8, category: "Electronics", batchCode: "LOT-B14" },
+  { id: "p-3", name: "Thermal Printer", sku: "SKU-1003", barcode: "8903333333333", price: 126, stock: 14, category: "Hardware", batchCode: "LOT-C02" },
+  { id: "p-4", name: "Warehouse Labels", sku: "SKU-1004", barcode: "8904444444444", price: 9.75, stock: 4, category: "Supplies", batchCode: "LOT-L07" },
+  { id: "1", name: "Ebook", sku: "EBK-01", barcode: "8901234567890", price: 3.5, stock: 300, category: "Digital", batchCode: "LOT-E01" },
+  { id: "2", name: "Pink potty seat non foldable", sku: "PPS-01", barcode: "8909876543210", price: 22, stock: 55, category: "Kids", batchCode: "LOT-PPS" },
+  { id: "3", name: "Electric socket white 12 vale", sku: "ES-12", barcode: "8905678901234", price: 6.75, stock: 120, category: "Hardware", batchCode: "LOT-ES12" },
 ];
 
 export const mockOrders: Order[] = [
@@ -68,6 +68,7 @@ export const mockInvoices: Invoice[] = [
 ];
 
 export const mockDailyReports: DailyReport[] = [];
+export const mockStockInEntries: StockInEntry[] = [];
 
 export const db = {
   products: mockProducts,
@@ -76,4 +77,5 @@ export const db = {
   stockMovements: mockStockMovements,
   invoices: mockInvoices,
   dailyReports: mockDailyReports,
+  stockInEntries: mockStockInEntries,
 };
