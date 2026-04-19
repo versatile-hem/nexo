@@ -1,0 +1,13 @@
+- [x] Verify that the copilot-instructions.md file in the .github directory is created.
+- [x] Clarify Project Requirements.
+- [x] Scaffold the Project.
+- [x] Customize the Project.
+- [x] Install Required Extensions. (No extensions required from setup info.)
+- [x] Compile the Project. (Type diagnostics pass; runtime compile blocked by missing Node/npm in environment.)
+- [x] Create and Run Task. (Created .vscode/tasks.json task; execution blocked by missing npm.)
+- [ ] Launch the Project. (Pending user confirmation and Node/npm availability.)
+- [x] Ensure Documentation is Complete.
+
+- Work through each checklist item systematically.
+- Keep communication concise and focused.
+- Follow development best practices.
