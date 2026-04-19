@@ -5,7 +5,7 @@ import { billingApi } from "@/services/billingApi";
 import { formatCurrency } from "@/utils/format";
 
 export function BillingIntegrationPage() {
-  const invoicesQuery = useQuery({ queryKey: ["billing-connectivity-invoices"], queryFn: billingApi.listInvoices });
+  const invoicesQuery = useQuery({ queryKey: ["billing-connectivity-invoices"], queryFn: () => billingApi.listInvoices() });
   const clientsQuery = useQuery({ queryKey: ["billing-connectivity-clients"], queryFn: () => billingApi.listClients() });
 
   if (invoicesQuery.error || clientsQuery.error) {

@@ -6,12 +6,21 @@ import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/shared/States";
-import { billingService } from "@/services/billingService";
+import { billingApi } from "@/services/billingApi";
+import { Invoice } from "@/mocks/types";
 import { formatCurrency } from "@/utils/format";
 import { printInvoice } from "@/utils/printInvoice";
 
 export function InvoiceListPage() {
-  const invoicesQuery = useQuery({ queryKey: ["invoices"], queryFn: billingService.getInvoices });
+  const today = new Date();
+  const toDate = today.toISOString().slice(0, 10);
+  const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+  const fromDate = monthStart.toISOString().slice(0, 10);
+
+  const invoicesQuery = useQuery({
+    queryKey: ["invoices", fromDate, toDate],
+    queryFn: () => billingApi.listInvoices(fromDate, toDate),
+  });
   const invoices = invoicesQuery.data ?? [];
   const [printingId, setPrintingId] = useState<string | null>(null);
 
@@ -21,8 +30,19 @@ export function InvoiceListPage() {
       return;
     }
 
+    const printableInvoice: Invoice = {
+      id: invoice.id,
+      customerId: "",
+      customerName: invoice.customerName,
+      issuedAt: invoice.billDate,
+      lineItems: [],
+      subtotal: invoice.totalAmount,
+      tax: 0,
+      total: invoice.totalAmount,
+    };
+
     setPrintingId(invoiceId);
-    const started = printInvoice(invoice);
+    const started = printInvoice(printableInvoice);
     if (!started) {
       toast.error("Popup blocked. Please allow popups to print the invoice.");
     }
@@ -56,8 +76,8 @@ export function InvoiceListPage() {
               <tr key={invoice.id} className="border-b border-black/5">
                 <td className="p-2">{invoice.id}</td>
                 <td className="p-2">{invoice.customerName}</td>
-                <td className="p-2">{invoice.issuedAt}</td>
-                <td className="p-2">{formatCurrency(invoice.total)}</td>
+                <td className="p-2">{invoice.billDate}</td>
+                <td className="p-2">{formatCurrency(invoice.totalAmount)}</td>
                 <td className="p-2">
                   <Button
                     variant="secondary"

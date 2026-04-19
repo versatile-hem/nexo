@@ -205,7 +205,7 @@ export function InvoiceForm({
                       onChange={(e) => {
                         const selected = products.find((product) => product.id === e.target.value);
                         onItemChange(index, {
-                          productId: selected?.id,
+                          productId: selected?.sku ?? selected?.id,
                           productName: selected?.name ?? item.productName,
                           hsn: selected?.hsn ?? item.hsn,
                           unitPrice: selected?.price ?? item.unitPrice,
