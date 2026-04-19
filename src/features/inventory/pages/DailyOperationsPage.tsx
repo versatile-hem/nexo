@@ -11,6 +11,7 @@ import { dailyOpsService } from "@/services/dailyOpsService";
 import { inventoryService } from "@/services/inventoryService";
 import { productService } from "@/services/productService";
 import { stockInService } from "@/services/stockInService";
+import { operationsApi } from "@/services/operationsApi";
 import { OrdersTable } from "@/features/inventory/components/OrdersTable";
 import { ReturnsTable } from "@/features/inventory/components/ReturnsTable";
 import { useIsMobile } from "@/hooks/useIsMobile";
@@ -48,6 +49,7 @@ export function DailyOperationsPage() {
   } = useDailyOpsStore();
 
   const [rawInput, setRawInput] = useState("Shadowfax=46 ebook\nVolmo=113 ebook");
+  const [updatedBalances, setUpdatedBalances] = useState<Array<{ productId: string; quantity: number }>>([]);
   const refs = useRef<Record<string, Focusable>>({});
 
   const summary = useMemo(() => {
@@ -100,19 +102,30 @@ export function DailyOperationsPage() {
         throw new Error(`Unknown products: ${unknown.map((item) => item.productName).join(", ")}`);
       }
 
-      await Promise.all(
-        cleanOrders.map((row) => {
+      const operationResults = await Promise.all([
+        ...cleanOrders.map((row) => {
           const product = resolveStockProduct(row, byId, byName)!;
-          return inventoryService.updateStock(product.id, "OUT", row.qty);
+          return operationsApi.dailyOperation({
+            type: "ORDER",
+            productId: product.id,
+            quantity: row.qty,
+            unit: row.unit,
+            courier: row.courier,
+            channel,
+          });
         }),
-      );
-
-      await Promise.all(
-        cleanReturns.map((row) => {
+        ...cleanReturns.map((row) => {
           const product = resolveStockProduct(row, byId, byName)!;
-          return inventoryService.updateStock(product.id, "IN", row.qty);
+          return operationsApi.dailyOperation({
+            type: "RETURN",
+            productId: product.id,
+            quantity: row.qty,
+            unit: row.unit,
+            courier: row.courier,
+            channel,
+          });
         }),
-      );
+      ]);
 
       await dailyOpsService.saveDailyReport({
         date,
@@ -120,9 +133,12 @@ export function DailyOperationsPage() {
         orders: cleanOrders,
         returns: cleanReturns,
       });
+
+      return operationResults;
     },
-    onSuccess: () => {
+    onSuccess: (results) => {
       toast.success("Daily operations saved and stock updated.");
+      setUpdatedBalances(results ?? []);
       queryClient.invalidateQueries({ queryKey: ["products"] });
       queryClient.invalidateQueries({ queryKey: ["stock-movements"] });
       queryClient.invalidateQueries({ queryKey: ["daily-reports"] });
@@ -162,6 +178,14 @@ export function DailyOperationsPage() {
 
   const channelOptions = channels.map((item) => ({ value: item, label: item }));
 
+  const handleSave = () => {
+    const hasOrders = sanitizeOrders(orders).length > 0;
+    if (hasOrders && !window.confirm("Proceed with ORDER entries? This will reduce stock quantities.")) {
+      return;
+    }
+    saveMutation.mutate();
+  };
+
   if (isMobile) {
     return (
       <MobileDailyOperations
@@ -180,7 +204,7 @@ export function DailyOperationsPage() {
         onChannelChange={setChannel}
         onParseInputChange={setRawInput}
         onParse={() => parseMutation.mutate(rawInput)}
-        onSave={() => saveMutation.mutate()}
+        onSave={handleSave}
         onAddOrderRow={addOrderRow}
         onAddReturnRow={addReturnRow}
         onUpdateOrderRow={updateOrderRow}
@@ -210,7 +234,7 @@ export function DailyOperationsPage() {
               />
             </div>
 
-            <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>
+            <Button onClick={handleSave} disabled={saveMutation.isPending}>
               {saveMutation.isPending ? "Saving..." : "Save Daily Report"}
             </Button>
           </div>
@@ -274,6 +298,21 @@ export function DailyOperationsPage() {
           <SummaryRow label="Total Orders Quantity" value={summary.totalOrdersQty} />
           <SummaryRow label="Total Returns Quantity" value={summary.totalReturnsQty} />
           <SummaryRow label="Net Stock Impact" value={summary.netStockImpact} emphasized />
+        </div>
+
+        <div className="mt-5">
+          <h4 className="text-sm font-semibold">Updated Inventory Balance</h4>
+          {updatedBalances.length === 0 ? (
+            <p className="mt-2 text-xs opacity-70">Save a daily operation to view balance response.</p>
+          ) : (
+            <ul className="mt-2 space-y-2">
+              {updatedBalances.map((item, idx) => (
+                <li key={`${item.productId}-${idx}`} className="rounded-md border border-black/10 px-2 py-1 text-xs dark:border-white/20">
+                  Product {item.productId}: <span className="font-semibold">{item.quantity}</span>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       </Card>
     </div>

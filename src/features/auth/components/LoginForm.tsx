@@ -1,4 +1,4 @@
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useState } from "react";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -17,14 +17,12 @@ export function LoginForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const emailValid = useMemo(() => /\S+@\S+\.\S+/.test(email.trim()), [email]);
-
   const onSubmit = async (event: FormEvent) => {
     event.preventDefault();
     setError(null);
 
-    if (!emailValid || !password.trim()) {
-      setError("Enter a valid email and password.");
+    if (!email.trim() || !password.trim()) {
+      setError("Enter username/email and password.");
       return;
     }
 
@@ -38,8 +36,8 @@ export function LoginForm() {
       }
       toast.success("Login successful");
       navigate("/dashboard", { replace: true });
-    } catch {
-      setError("Invalid credentials");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Login failed");
     } finally {
       setLoading(false);
     }
@@ -48,13 +46,13 @@ export function LoginForm() {
   return (
     <form className="space-y-4" onSubmit={onSubmit}>
       <div>
-        <label className="mb-1 block text-sm font-medium">Email</label>
+        <label className="mb-1 block text-sm font-medium">Username or Email</label>
         <Input
-          type="email"
+          type="text"
           placeholder="admin@nexo.com"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          autoComplete="email"
+          autoComplete="username"
           required
         />
       </div>

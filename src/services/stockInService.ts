@@ -1,7 +1,8 @@
 import { db } from "@/mocks/data";
 import { StockInEntry } from "@/mocks/types";
-import { inventoryService } from "@/services/inventoryService";
 import { mockResponse } from "@/services/api";
+import { operationsApi } from "@/services/operationsApi";
+import { productService } from "@/services/productService";
 
 interface RecordStockInPayload {
   productId: string;
@@ -11,7 +12,8 @@ interface RecordStockInPayload {
 
 export const stockInService = {
   recordStockIn: async (payload: RecordStockInPayload) => {
-    const product = db.products.find((item) => item.id === payload.productId);
+    const catalog = await productService.getProducts();
+    const product = catalog.find((item) => item.id === payload.productId);
     if (!product) {
       throw new Error("Product not found");
     }
@@ -20,7 +22,13 @@ export const stockInService = {
       throw new Error("Enter a valid stock quantity");
     }
 
-    await inventoryService.updateStock(payload.productId, "IN", payload.qty);
+    await operationsApi.stockIn([
+      {
+        productId: payload.productId,
+        quantity: payload.qty,
+        unit: "nos",
+      },
+    ]);
 
     const entry: StockInEntry = {
       id: `sin-${Date.now()}`,

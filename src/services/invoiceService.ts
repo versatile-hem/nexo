@@ -1,5 +1,6 @@
 import { db } from "@/mocks/data";
 import { mockResponse } from "@/services/api";
+import { productsApi } from "@/services/productsApi";
 import { Invoice } from "@/mocks/types";
 
 export type TaxType = "CGST_SGST" | "IGST";
@@ -7,6 +8,7 @@ export type TaxType = "CGST_SGST" | "IGST";
 export interface InvoiceCustomer {
   id: string;
   name: string;
+  phone: string;
   billingAddress: string;
   gstin: string;
   state: string;
@@ -78,13 +80,26 @@ export const invoiceService = {
       db.customers.map((customer) => ({
         id: customer.id,
         name: customer.name,
+        phone: customer.phone,
         billingAddress: customer.billingAddress,
         gstin: customer.gstin,
         state: customer.state,
       })),
     ),
 
-  getProducts: async (): Promise<InvoiceProduct[]> => mockResponse([...invoiceProducts]),
+  getProducts: async (): Promise<InvoiceProduct[]> => {
+    try {
+      const products = await productsApi.list();
+      return products.map((product) => ({
+        id: product.id,
+        name: product.name,
+        hsn: product.hsn || "",
+        price: Number(product.price ?? 0),
+      }));
+    } catch {
+      return mockResponse([...invoiceProducts]);
+    }
+  },
 
   generateInvoiceNumber: () => `INV-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}-${Math.floor(Math.random() * 900 + 100)}`,
 

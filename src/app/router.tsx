@@ -5,12 +5,15 @@ import { OperationDashboard } from "@/features/dashboard/OperationDashboard";
 import { LoginPage } from "@/features/auth/pages/LoginPage";
 import { ProductListPage } from "@/features/inventory/pages/ProductListPage";
 import { ProductFormPage } from "@/features/inventory/pages/ProductFormPage";
+import { ProductDetailsPage } from "@/features/inventory/pages/ProductDetailsPage";
 import { StockMovementsPage } from "@/features/inventory/pages/StockMovementsPage";
 import { StockInPage } from "@/features/inventory/pages/StockInPage";
 import { BatchTrackingPage } from "@/features/inventory/pages/BatchTrackingPage";
 import { DailyOperationsPage } from "@/features/inventory/pages/DailyOperationsPage";
+import { InventoryLookupPage } from "@/features/inventory/pages/InventoryLookupPage";
 import { InvoiceListPage } from "@/features/billing/pages/InvoiceListPage";
 import { CreateInvoicePage } from "@/features/billing/pages/CreateInvoicePage";
+import { BillingIntegrationPage } from "@/features/billing/pages/BillingIntegrationPage";
 import { CustomerListPage } from "@/features/customers/pages/CustomerListPage";
 import { CustomerProfilePage } from "@/features/customers/pages/CustomerProfilePage";
 import { OrderListPage } from "@/features/orders/pages/OrderListPage";
@@ -37,13 +40,29 @@ export const appRouter = createBrowserRouter([
       {
         path: "products",
         element: (
-          <ProtectedRoute allowedRoles={["admin"]}>
+          <ProtectedRoute allowedRoles={["admin", "operation_manager"]}>
             <ProductListPage />
           </ProtectedRoute>
         ),
       },
       {
+        path: "products/:productId",
+        element: (
+          <ProtectedRoute allowedRoles={["admin", "operation_manager"]}>
+            <ProductDetailsPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
         path: "products/new",
+        element: (
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <ProductFormPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "products/:productId/edit",
         element: (
           <ProtectedRoute allowedRoles={["admin"]}>
             <ProductFormPage />
@@ -67,6 +86,14 @@ export const appRouter = createBrowserRouter([
           </ProtectedRoute>
         ),
       },
+      {
+        path: "inventory/lookup",
+        element: (
+          <ProtectedRoute allowedRoles={["admin", "operation_manager"]}>
+            <InventoryLookupPage />
+          </ProtectedRoute>
+        ),
+      },
       { path: "inventory/stock-in", element: <StockInPage /> },
       { path: "inventory/daily-operations", element: <DailyOperationsPage /> },
       {
@@ -82,6 +109,14 @@ export const appRouter = createBrowserRouter([
         element: (
           <ProtectedRoute allowedRoles={["admin"]}>
             <CreateInvoicePage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "billing/integration",
+        element: (
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <BillingIntegrationPage />
           </ProtectedRoute>
         ),
       },

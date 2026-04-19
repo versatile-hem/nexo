@@ -6,6 +6,7 @@ import { ErrorState } from "@/components/shared/States";
 import { formatCurrency } from "@/utils/format";
 import { inventoryService } from "@/services/inventoryService";
 import { orderService } from "@/services/orderService";
+import { InventoryInsights } from "@/features/dashboard/components/InventoryInsights";
 
 const salesTrend = [
   { name: "Mon", sales: 900 },
@@ -81,6 +82,8 @@ export function DashboardPage() {
           </ResponsiveContainer>
         </Card>
       </div>
+
+      <InventoryInsights />
     </div>
   );
 }

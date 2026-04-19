@@ -33,7 +33,10 @@ export function InvoiceListPage() {
     <Card>
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-lg font-semibold">Invoice List</h2>
-        <Link to="/billing/create-invoice"><Button>Create Invoice</Button></Link>
+        <div className="flex gap-2">
+          <Link to="/billing/integration"><Button variant="secondary">Connectivity Panel</Button></Link>
+          <Link to="/billing/create-invoice"><Button>Create Invoice</Button></Link>
+        </div>
       </div>
       {invoices.length === 0 ? (
         <EmptyState title="No invoices" subtitle="Create an invoice with GST-ready line items." />
