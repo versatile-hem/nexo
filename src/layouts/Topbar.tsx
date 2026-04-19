@@ -13,6 +13,7 @@ export function Topbar() {
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const role = useAuthStore((state) => state.role);
+  const roles = useAuthStore((state) => state.roles);
   const logout = useAuthStore((state) => state.logout);
   const search = useUIStore((state) => state.globalSearch);
   const setSearch = useUIStore((state) => state.setGlobalSearch);
@@ -20,6 +21,7 @@ export function Topbar() {
   const toggleDark = useUIStore((state) => state.toggleDarkMode);
   const debounced = useDebounce(search, 200);
   const [menuOpen, setMenuOpen] = useState(false);
+  const roleInput = roles.length > 0 ? roles : role;
 
   const matches = useMemo(() => {
     const term = debounced.toLowerCase().trim();
@@ -55,8 +57,8 @@ export function Topbar() {
       </div>
 
       <div className="flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto sm:flex-nowrap">
-        {isAdmin(role) ? <Link to="/products/new" className="hidden sm:inline-flex"><Button variant="secondary"><Plus size={16} /> Add Product</Button></Link> : null}
-        {isAdmin(role) ? <Link to="/billing/create-invoice" className="hidden sm:inline-flex"><Button>Create Invoice</Button></Link> : null}
+        {isAdmin(roleInput) ? <Link to="/products/new" className="hidden sm:inline-flex"><Button variant="secondary"><Plus size={16} /> Add Product</Button></Link> : null}
+        {isAdmin(roleInput) ? <Link to="/billing/create-invoice" className="hidden sm:inline-flex"><Button>Create Invoice</Button></Link> : null}
         <Button variant="ghost" onClick={toggleDark}>{dark ? <Sun size={16} /> : <Moon size={16} />}</Button>
         <Button variant="ghost"><Bell size={16} /></Button>
         <div className="relative">

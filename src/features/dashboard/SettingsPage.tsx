@@ -3,13 +3,15 @@ import { useAuthStore } from "@/store/authStore";
 
 export function SettingsPage() {
   const role = useAuthStore((state) => state.role);
+  const roles = useAuthStore((state) => state.roles);
+  const roleLabel = roles.length > 0 ? roles.join(", ") : role ?? "none";
 
   return (
     <Card>
       <h2 className="text-lg font-semibold">Settings</h2>
       <p className="mt-2 text-sm opacity-70">Admin settings module is available only for admin users.</p>
       <div className="mt-4">
-        <span className="text-sm">Current role: {role ?? "none"}</span>
+        <span className="text-sm">Current role(s): {roleLabel}</span>
       </div>
     </Card>
   );

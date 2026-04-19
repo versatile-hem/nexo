@@ -4,11 +4,13 @@ import {
   Boxes,
   ChevronDown,
   ClipboardList,
+  Coins,
   CreditCard,
   FileBarChart2,
   Inbox,
   LayoutDashboard,
   LogOut,
+  ReceiptText,
   Settings,
   ShoppingCart,
   Users,
@@ -18,7 +20,7 @@ import { useState } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/utils/cn";
 import { useAuthStore } from "@/store/authStore";
-import { isAdmin, isOperationManager } from "@/utils/roleUtils";
+import { isAdmin, isFieldSalesExecutive, isOperationManager } from "@/utils/roleUtils";
 
 const topNav = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -41,12 +43,15 @@ const inventoryChildren = [
 export function Sidebar({ collapsed }: { collapsed: boolean }) {
   const navigate = useNavigate();
   const role = useAuthStore((state) => state.role);
+  const roles = useAuthStore((state) => state.roles);
   const logout = useAuthStore((state) => state.logout);
   const location = useLocation();
   const inventoryActive = location.pathname.startsWith("/inventory");
   const [inventoryOpen, setInventoryOpen] = useState(false);
-  const adminView = isAdmin(role);
-  const opsView = isOperationManager(role);
+  const roleInput = roles.length > 0 ? roles : role;
+  const adminView = isAdmin(roleInput);
+  const opsView = isOperationManager(roleInput);
+  const fseView = isFieldSalesExecutive(roleInput);
 
   const onLogout = async () => {
     await logout();
@@ -60,6 +65,21 @@ export function Sidebar({ collapsed }: { collapsed: boolean }) {
         {!collapsed ? <div><p className="text-xs uppercase tracking-wide">Nexo</p><p className="text-sm font-bold">Ops Console</p></div> : null}
       </div>
       <nav className="space-y-1">
+        {fseView && !opsView ? (
+          <NavLink
+            to="/dashboard"
+            className={({ isActive }) =>
+              cn(
+                "flex items-center gap-2 rounded-xl px-3 py-2 text-sm transition",
+                isActive ? "bg-nexo-accent text-white" : "hover:bg-black/5 dark:hover:bg-white/10",
+              )
+            }
+          >
+            <LayoutDashboard size={16} />
+            {!collapsed ? <span>Dashboard</span> : null}
+          </NavLink>
+        ) : null}
+
         {opsView ? (
           <>
             <NavLink
@@ -126,15 +146,62 @@ export function Sidebar({ collapsed }: { collapsed: boolean }) {
               <Activity size={16} />
               {!collapsed ? <span>Inventory Lookup</span> : null}
             </NavLink>
+          </>
+        ) : null}
 
-            <button
-              type="button"
-              onClick={onLogout}
-              className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm transition hover:bg-black/5 dark:hover:bg-white/10"
+        {fseView ? (
+          <>
+            <NavLink
+              to="/sales/create-order"
+              className={({ isActive }) =>
+                cn(
+                  "flex items-center gap-2 rounded-xl px-3 py-2 text-sm transition",
+                  isActive ? "bg-nexo-accent text-white" : "hover:bg-black/5 dark:hover:bg-white/10",
+                )
+              }
             >
-              <LogOut size={16} />
-              {!collapsed ? <span>Logout</span> : null}
-            </button>
+              <ShoppingCart size={16} />
+              {!collapsed ? <span>Take Order</span> : null}
+            </NavLink>
+
+            <NavLink
+              to="/sales/orders"
+              className={({ isActive }) =>
+                cn(
+                  "flex items-center gap-2 rounded-xl px-3 py-2 text-sm transition",
+                  isActive ? "bg-nexo-accent text-white" : "hover:bg-black/5 dark:hover:bg-white/10",
+                )
+              }
+            >
+              <ReceiptText size={16} />
+              {!collapsed ? <span>My Orders</span> : null}
+            </NavLink>
+
+            <NavLink
+              to="/sales/payments"
+              className={({ isActive }) =>
+                cn(
+                  "flex items-center gap-2 rounded-xl px-3 py-2 text-sm transition",
+                  isActive ? "bg-nexo-accent text-white" : "hover:bg-black/5 dark:hover:bg-white/10",
+                )
+              }
+            >
+              <CreditCard size={16} />
+              {!collapsed ? <span>Payments</span> : null}
+            </NavLink>
+
+            <NavLink
+              to="/sales/commission"
+              className={({ isActive }) =>
+                cn(
+                  "flex items-center gap-2 rounded-xl px-3 py-2 text-sm transition",
+                  isActive ? "bg-nexo-accent text-white" : "hover:bg-black/5 dark:hover:bg-white/10",
+                )
+              }
+            >
+              <Coins size={16} />
+              {!collapsed ? <span>My Commission</span> : null}
+            </NavLink>
           </>
         ) : null}
 
@@ -232,6 +299,15 @@ export function Sidebar({ collapsed }: { collapsed: boolean }) {
             })}
           </>
         ) : null}
+
+        <button
+          type="button"
+          onClick={onLogout}
+          className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm transition hover:bg-black/5 dark:hover:bg-white/10"
+        >
+          <LogOut size={16} />
+          {!collapsed ? <span>Logout</span> : null}
+        </button>
       </nav>
     </aside>
   );

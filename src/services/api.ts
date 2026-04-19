@@ -10,14 +10,25 @@ export const api = axios.create({
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem(AUTH_TOKEN_KEY);
   if (token) {
-    config.headers.set("Authorization", `Basic ${token}`);
+    config.headers.set("Authorization", `Bearer ${token}`);
   }
   return config;
 });
 
 api.interceptors.response.use(
   (response) => response,
-  (error) => Promise.reject(mapHttpError(error)),
+  (error) => {
+    if (error?.response?.status === 401) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("nexo-auth-user");
+      localStorage.removeItem("nexo-auth-store");
+      if (window.location.pathname !== "/login") {
+        window.location.href = "/login";
+      }
+    }
+
+    return Promise.reject(mapHttpError(error));
+  },
 );
 
 export function mockResponse<T>(data: T, delay = 300): Promise<T> {

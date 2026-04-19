@@ -14,6 +14,10 @@ import { InventoryLookupPage } from "@/features/inventory/pages/InventoryLookupP
 import { InvoiceListPage } from "@/features/billing/pages/InvoiceListPage";
 import { CreateInvoicePage } from "@/features/billing/pages/CreateInvoicePage";
 import { BillingIntegrationPage } from "@/features/billing/pages/BillingIntegrationPage";
+import { CreateOrderPage } from "@/features/sales/pages/CreateOrderPage";
+import { MyOrdersPage } from "@/features/sales/pages/MyOrdersPage";
+import { PaymentsPage } from "@/features/sales/pages/PaymentsPage";
+import { CommissionPage } from "@/features/sales/pages/CommissionPage";
 import { CustomerListPage } from "@/features/customers/pages/CustomerListPage";
 import { CustomerProfilePage } from "@/features/customers/pages/CustomerProfilePage";
 import { OrderListPage } from "@/features/orders/pages/OrderListPage";
@@ -23,7 +27,7 @@ import { SettingsPage } from "@/features/dashboard/SettingsPage";
 import { UnauthorizedPage } from "@/features/dashboard/UnauthorizedPage";
 import { ProtectedRoute } from "@/routes/ProtectedRoute";
 import { useAuthStore } from "@/store/authStore";
-import { isAdmin } from "@/utils/roleUtils";
+import { isAdmin, isFieldSalesExecutive } from "@/utils/roleUtils";
 
 export const appRouter = createBrowserRouter([
   { path: "/login", element: <LoginPage /> },
@@ -122,6 +126,38 @@ export const appRouter = createBrowserRouter([
       },
       { path: "billing/new", element: <Navigate to="/billing/create-invoice" replace /> },
       {
+        path: "sales/create-order",
+        element: (
+          <ProtectedRoute allowedRoles={["field_sales_executive", "admin"]}>
+            <CreateOrderPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "sales/orders",
+        element: (
+          <ProtectedRoute allowedRoles={["field_sales_executive", "admin"]}>
+            <MyOrdersPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "sales/payments",
+        element: (
+          <ProtectedRoute allowedRoles={["field_sales_executive", "admin"]}>
+            <PaymentsPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "sales/commission",
+        element: (
+          <ProtectedRoute allowedRoles={["field_sales_executive", "admin"]}>
+            <CommissionPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
         path: "orders",
         element: (
           <ProtectedRoute allowedRoles={["admin"]}>
@@ -183,10 +219,23 @@ function RootRedirect() {
 
 function RoleAwareDashboard() {
   const role = useAuthStore((state) => state.role);
-  return isAdmin(role) ? <DashboardPage /> : <OperationDashboard />;
+  const roles = useAuthStore((state) => state.roles);
+  const roleInput = roles.length > 0 ? roles : role;
+  return isAdmin(roleInput) ? <DashboardPage /> : <OperationDashboard />;
 }
 
 function InventoryRootRedirect() {
   const role = useAuthStore((state) => state.role);
-  return <Navigate to={isAdmin(role) ? "/inventory/stock-movements" : "/inventory/stock-in"} replace />;
+  const roles = useAuthStore((state) => state.roles);
+  const roleInput = roles.length > 0 ? roles : role;
+
+  if (isAdmin(roleInput)) {
+    return <Navigate to="/inventory/stock-movements" replace />;
+  }
+
+  if (isFieldSalesExecutive(roleInput)) {
+    return <Navigate to="/sales/create-order" replace />;
+  }
+
+  return <Navigate to="/inventory/stock-in" replace />;
 }
