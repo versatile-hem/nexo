@@ -63,7 +63,7 @@ export function Dropdown({
       </button>
 
       {open ? (
-        <div className="absolute z-40 mt-1 w-full rounded-xl border border-black/10 bg-white p-2 shadow-card dark:border-white/20 dark:bg-[#243426]">
+        <div className="absolute z-50 mt-1 w-full rounded-xl border border-black/10 bg-white p-2 shadow-card dark:border-white/20 dark:bg-[#243426]">
           {searchable ? (
             <input
               ref={inputRef}

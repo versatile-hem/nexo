@@ -51,11 +51,11 @@ export function ReturnsTable({
       <div className="mb-3 flex items-center justify-between">
         <h3 className="text-lg font-semibold">Returns</h3>
         <Button className="gap-2" onClick={onAddRow}>
-          <Plus size={14} /> + Add Row
+          <Plus size={14} /> Add Row
         </Button>
       </div>
 
-      <div className="overflow-x-auto rounded-xl border border-black/10 dark:border-white/20">
+      <div className="h-[400px] overflow-y-auto overflow-x-auto rounded-xl border border-black/10 dark:border-white/20">
         <table className="w-full min-w-[760px] text-left text-sm">
           <thead className="sticky top-0 z-10 bg-[#edf3e6] text-xs uppercase tracking-wide dark:bg-[#203022]">
             <tr>

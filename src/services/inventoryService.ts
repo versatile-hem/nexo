@@ -1,8 +1,14 @@
 import { db } from "@/mocks/data";
-import { Product } from "@/mocks/types";
-import { mockResponse } from "@/services/api";
-import { operationsApi } from "@/services/operationsApi";
+import { Product, StockMovementType, StockMovement } from "@/mocks/types";
+import { api, mockResponse } from "@/services/api";
+import { operationsApi, StockInLineItem } from "@/services/operationsApi";
 import { productsApi, UpsertProductPayload } from "@/services/productsApi";
+
+interface StockMovementRequest {
+  productId: string;
+  quantity: number;
+  type: StockMovementType;
+}
 
 export const inventoryService = {
   getProducts: async (): Promise<Product[]> => {
@@ -59,7 +65,79 @@ export const inventoryService = {
     } satisfies Product;
   },
 
-  getStockMovements: () => mockResponse([...db.stockMovements]),
+  createStockMovements: async (movements: StockMovementRequest[]) => {
+    const inMovements = movements.filter((m) => m.type === "IN");
+    const outMovements = movements.filter((m) => m.type === "OUT");
+
+    const results = [];
+
+    // Process stock in movements
+    if (inMovements.length > 0) {
+      const inItems: StockInLineItem[] = inMovements.map((m) => ({
+        productId: m.productId,
+        quantity: m.quantity,
+        unit: "nos",
+      }));
+      const inResults = await operationsApi.stockIn(inItems);
+      results.push(...inResults);
+    }
+
+    // Process stock out movements
+    if (outMovements.length > 0) {
+      for (const movement of outMovements) {
+        const result = await operationsApi.dailyOperation({
+          type: "ORDER",
+          productId: movement.productId,
+          quantity: movement.quantity,
+          unit: "nos",
+          channel: "Offline",
+        });
+        results.push(result);
+      }
+    }
+
+    return results;
+  },
+
+  getStockMovements: async (): Promise<StockMovement[]> => {
+    try {
+      const response = await api.get<StockMovement[]>("/stock-movements");
+      return Array.isArray(response.data) ? response.data : [];
+    } catch {
+      // Fallback to mock data if API fails
+      return mockResponse([...db.stockMovements]);
+    }
+  },
+
+  getStockMovementsFiltered: async (
+    type?: "IN" | "OUT",
+    startDate?: string,
+    endDate?: string,
+    page = 0,
+    size = 20,
+  ) => {
+    try {
+      const params = new URLSearchParams();
+      if (type) params.append("type", type);
+      if (startDate) params.append("startDate", startDate);
+      if (endDate) params.append("endDate", endDate);
+      params.append("page", String(page));
+      params.append("size", String(size));
+
+      const response = await api.get(`/stock-movements?${params.toString()}`);
+      return response.data;
+    } catch {
+      // Fallback to mock data if API fails
+      return {
+        content: [...db.stockMovements],
+        pageNumber: 0,
+        pageSize: 20,
+        totalElements: db.stockMovements.length,
+        totalPages: 1,
+        last: true,
+      };
+    }
+  },
 };
 
 function toUpsertPayload(payload: Omit<Product, "id">): UpsertProductPayload {
