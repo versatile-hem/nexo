@@ -12,6 +12,7 @@ export interface StockInLineItem {
   unit: string;
   supplier?: string;
   batchNumber?: string;
+  movementTime?: string;
 }
 
 export interface DailyOperationPayload {
@@ -21,6 +22,7 @@ export interface DailyOperationPayload {
   unit: string;
   courier?: string;
   channel?: "Meesho" | "Flipkart" | "Offline" | "Amazon";
+  movementTime?: string;
 }
 
 export const operationsApi = {
@@ -31,6 +33,7 @@ export const operationsApi = {
       unit: item.unit,
       supplier: item.supplier,
       batchNumber: item.batchNumber,
+      movementTime: item.movementTime || new Date().toISOString(),
     }));
 
     const response = await api.post<InventoryBalanceResponseDto[]>("/stock-in", payload);
@@ -45,10 +48,29 @@ export const operationsApi = {
       unit: payload.unit,
       courier: payload.courier,
       channel: toBackendChannel(payload.channel),
+      movementTime: payload.movementTime || new Date().toISOString(),
     };
 
     const response = await api.post<InventoryBalanceResponseDto>("/daily-operations", request);
     return toInventoryBalance(response.data);
+  },
+
+  async endOfDayOperations(operations: DailyOperationPayload[], notes?: string) {
+    const payload = {
+      operations: operations.map((op) => ({
+        type: op.type,
+        productId: Number(op.productId),
+        quantity: op.quantity,
+        unit: op.unit,
+        courier: op.courier,
+        channel: toBackendChannel(op.channel),
+        movementTime: op.movementTime || new Date().toISOString(),
+      })),
+      notes: notes || "",
+    };
+
+    const response = await api.post<any>("/end-of-day-operations", payload);
+    return response.data;
   },
 };
 

@@ -1,5 +1,6 @@
 import { db } from "@/mocks/data";
 import { mockResponse } from "@/services/api";
+import { billingApi } from "@/services/billingApi";
 import { productsApi } from "@/services/productsApi";
 import { Invoice } from "@/mocks/types";
 
@@ -16,6 +17,7 @@ export interface InvoiceCustomer {
 
 export interface InvoiceProduct {
   id: string;
+  sku?: string;
   name: string;
   hsn: string;
   price: number;
@@ -92,6 +94,7 @@ export const invoiceService = {
       const products = await productsApi.list();
       return products.map((product) => ({
         id: product.id,
+        sku: product.sku,
         name: product.name,
         hsn: product.hsn || "",
         price: Number(product.price ?? 0),
@@ -142,6 +145,22 @@ export const invoiceService = {
   createInvoice: async (draft: InvoiceDraft) => {
     const { lines, totals } = invoiceService.calculateTotals(draft.items, draft.placeOfSupply);
 
+    await billingApi.generateInvoice({
+      billNo: draft.invoiceNumber,
+      customerId: Number(draft.customer?.id ?? 0),
+      customerName: draft.customer?.name ?? "",
+      customerPhone: draft.customer?.phone ?? "",
+      billDate: toBillDateTime(draft.invoiceDate),
+      discountAmount: totals.totalDiscount,
+      paymentMode: "UPI",
+      status: "PAID",
+      items: lines.map((line) => ({
+        sku: line.productId || line.productName,
+        quantity: line.qty,
+        unitPrice: line.unitPrice,
+      })),
+    });
+
     const invoiceRecord: Invoice = {
       id: draft.invoiceNumber,
       customerId: draft.customer?.id ?? "",
@@ -170,4 +189,11 @@ export const invoiceService = {
 
 function normalizeState(value: string) {
   return value.trim().toLowerCase();
+}
+
+function toBillDateTime(date: string) {
+  if (/^\d{4}-\d{2}-\d{2}T/.test(date)) {
+    return date;
+  }
+  return `${date}T00:00:00`;
 }

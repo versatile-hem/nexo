@@ -5,7 +5,7 @@ import { billingApi } from "@/services/billingApi";
 import { formatCurrency } from "@/utils/format";
 
 export function BillingIntegrationPage() {
-  const invoicesQuery = useQuery({ queryKey: ["billing-connectivity-invoices"], queryFn: billingApi.listInvoices });
+  const invoicesQuery = useQuery({ queryKey: ["billing-connectivity-invoices"], queryFn: () => billingApi.listInvoices() });
   const clientsQuery = useQuery({ queryKey: ["billing-connectivity-clients"], queryFn: () => billingApi.listClients() });
 
   if (invoicesQuery.error || clientsQuery.error) {
@@ -21,7 +21,7 @@ export function BillingIntegrationPage() {
 
       <Card>
         <h3 className="mb-3 text-base font-semibold">Invoices (/api/invoice)</h3>
-        {(invoicesQuery.data ?? []).length === 0 ? (
+        {(invoicesQuery.data?.invoices ?? []).length === 0 ? (
           <EmptyState title="No invoices" subtitle="Invoice API is reachable but returned no records." />
         ) : (
           <table className="w-full text-left text-sm">
@@ -35,7 +35,7 @@ export function BillingIntegrationPage() {
               </tr>
             </thead>
             <tbody>
-              {(invoicesQuery.data ?? []).slice(0, 10).map((invoice) => (
+              {(invoicesQuery.data?.invoices ?? []).slice(0, 10).map((invoice: any) => (
                 <tr key={invoice.id} className="border-b border-black/5">
                   <td className="p-2">{invoice.id}</td>
                   <td className="p-2">{invoice.customerName}</td>

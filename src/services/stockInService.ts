@@ -1,6 +1,6 @@
 import { db } from "@/mocks/data";
 import { StockInEntry } from "@/mocks/types";
-import { mockResponse } from "@/services/api";
+import { mockResponse, api } from "@/services/api";
 import { operationsApi } from "@/services/operationsApi";
 import { productService } from "@/services/productService";
 
@@ -51,7 +51,25 @@ export const stockInService = {
   getLastUpdated: () => mockResponse(db.stockInEntries[0]?.receivedAt ?? null),
 
   hasStockInForDate: async (date: string) => {
-    const count = db.stockInEntries.filter((entry) => entry.receivedAt.slice(0, 10) === date).length;
-    return mockResponse(count > 0);
+    try {
+      // Check backend for stock-in operations on the given date
+      const response = await api.get<any>("/stock-movements", {
+        params: {
+          type: "IN",
+          startDate: date,
+          endDate: date,
+          page: 0,
+          size: 1,
+        },
+      });
+      
+      // If there's at least one stock-in movement on this date, return true
+      const hasStockIn = response.data?.content?.length > 0;
+      return mockResponse(hasStockIn);
+    } catch (error) {
+      // Fallback to mock data if API fails
+      const count = db.stockInEntries.filter((entry) => entry.receivedAt.slice(0, 10) === date).length;
+      return mockResponse(count > 0);
+    }
   },
 };

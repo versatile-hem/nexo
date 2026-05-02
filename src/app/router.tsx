@@ -7,6 +7,7 @@ import { ProductListPage } from "@/features/inventory/pages/ProductListPage";
 import { ProductFormPage } from "@/features/inventory/pages/ProductFormPage";
 import { ProductDetailsPage } from "@/features/inventory/pages/ProductDetailsPage";
 import { StockMovementsPage } from "@/features/inventory/pages/StockMovementsPage";
+import { StockMovementPage } from "@/features/inventory/pages/StockMovementPage";
 import { StockInPage } from "@/features/inventory/pages/StockInPage";
 import { BatchTrackingPage } from "@/features/inventory/pages/BatchTrackingPage";
 import { DailyOperationsPage } from "@/features/inventory/pages/DailyOperationsPage";
@@ -89,6 +90,10 @@ export const appRouter = createBrowserRouter([
             <StockMovementsPage />
           </ProtectedRoute>
         ),
+      },
+      {
+        path: "inventory/stock-movement",
+        element: <StockMovementPage />,
       },
       {
         path: "inventory/lookup",

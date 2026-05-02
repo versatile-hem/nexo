@@ -36,7 +36,8 @@ const bottomNav = [
 ];
 
 const inventoryChildren = [
-  { to: "/inventory/stock-movements", label: "Stock Movements", icon: Activity },
+  { to: "/inventory/stock-movement", label: "Stock Movement", icon: Activity },
+  { to: "/inventory/stock-movements", label: "Movement History", icon: Activity },
   { to: "/inventory/daily-operations", label: "Daily Operations", icon: ClipboardList },
 ];
 
