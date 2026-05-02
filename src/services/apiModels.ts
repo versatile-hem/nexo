@@ -24,6 +24,7 @@ export interface StockInRequestDto {
   unit: string;
   supplier?: string;
   batchNumber?: string;
+  movementTime?: string;
 }
 
 export interface DailyOperationRequestDto {
@@ -33,6 +34,7 @@ export interface DailyOperationRequestDto {
   unit: string;
   courier?: string;
   channel?: "FLIPKART" | "MEESHO" | "OFFLINE" | "AMAZON" | "WAREHOUSE";
+  movementTime?: string;
 }
 
 export interface InvoiceResponseDto {

@@ -1,4 +1,4 @@
-import { ProductOption } from "@/mocks/types";
+import { Product, ProductOption } from "@/mocks/types";
 import { productsApi } from "@/services/productsApi";
 
 export const productService = {
@@ -10,5 +10,18 @@ export const productService = {
       sku: item.sku,
       barcode: item.barcode,
     }));
+  },
+
+  getProductById: async (id: string): Promise<Product> => {
+    const product = await productsApi.getById(id);
+    return {
+      id: product.id,
+      name: product.name,
+      sku: product.sku,
+      barcode: product.barcode,
+      price: product.price,
+      stock: product.stock,
+      category: product.category,
+    };
   },
 };

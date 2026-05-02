@@ -102,30 +102,36 @@ export function DailyOperationsPage() {
         throw new Error(`Unknown products: ${unknown.map((item) => item.productName).join(", ")}`);
       }
 
-      const operationResults = await Promise.all([
+      // Build operations array for batch endpoint
+      const operations = [
         ...cleanOrders.map((row) => {
           const product = resolveStockProduct(row, byId, byName)!;
-          return operationsApi.dailyOperation({
-            type: "ORDER",
+          return {
+            type: "ORDER" as const,
             productId: product.id,
             quantity: row.qty,
             unit: row.unit,
             courier: row.courier,
-            channel,
-          });
+            channel: channel as "Meesho" | "Flipkart" | "Offline" | "Amazon" | undefined,
+            movementTime: new Date().toISOString(),
+          };
         }),
         ...cleanReturns.map((row) => {
           const product = resolveStockProduct(row, byId, byName)!;
-          return operationsApi.dailyOperation({
-            type: "RETURN",
+          return {
+            type: "RETURN" as const,
             productId: product.id,
             quantity: row.qty,
             unit: row.unit,
             courier: row.courier,
-            channel,
-          });
+            channel: channel as "Meesho" | "Flipkart" | "Offline" | "Amazon" | undefined,
+            movementTime: new Date().toISOString(),
+          };
         }),
-      ]);
+      ];
+
+      // Call batch endpoint
+      const result = await operationsApi.endOfDayOperations(operations);
 
       await dailyOpsService.saveDailyReport({
         date,
@@ -134,11 +140,13 @@ export function DailyOperationsPage() {
         returns: cleanReturns,
       });
 
-      return operationResults;
+      return result;
     },
     onSuccess: (results) => {
       toast.success("Daily operations saved and stock updated.");
-      setUpdatedBalances(results ?? []);
+      // Handle both array and object responses from batch endpoint
+      const balances = Array.isArray(results) ? results : (results?.operations ? results.operations : []);
+      setUpdatedBalances(balances);
       queryClient.invalidateQueries({ queryKey: ["products"] });
       queryClient.invalidateQueries({ queryKey: ["stock-movements"] });
       queryClient.invalidateQueries({ queryKey: ["daily-reports"] });
@@ -219,7 +227,7 @@ export function DailyOperationsPage() {
     <div className="grid gap-4 xl:grid-cols-[1fr_320px]">
       <div className="space-y-4">
         <Card>
-          <div className="flex flex-wrap items-end gap-3">
+          <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6">
             <div>
               <p className="mb-1 text-xs uppercase opacity-70">Date</p>
               <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
@@ -234,8 +242,8 @@ export function DailyOperationsPage() {
               />
             </div>
 
-            <Button onClick={handleSave} disabled={saveMutation.isPending}>
-              {saveMutation.isPending ? "Saving..." : "Save Daily Report"}
+            <Button onClick={handleSave} disabled={saveMutation.isPending} className="mt-5">
+              {saveMutation.isPending ? "Saving..." : "Save"}
             </Button>
           </div>
         </Card>

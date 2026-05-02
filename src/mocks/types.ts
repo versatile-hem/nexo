@@ -31,13 +31,28 @@ export interface Customer {
   state: string;
 }
 
+export interface StockMovementItem {
+  id?: string | number;
+  productId: string | number;
+  productName: string;
+  sku?: string;
+  quantity: number;
+  reference?: string;
+}
+
 export interface StockMovement {
   id: string;
-  productId: string;
-  product: string;
+  productId?: string;
+  product?: string;
   type: StockMovementType;
-  qty: number;
-  date: string;
+  qty?: number;
+  date?: string;
+  // API response fields
+  reference?: string;
+  createdAt?: string;
+  items?: StockMovementItem[];
+  createdBy?: string;
+  notes?: string;
 }
 
 export interface StockInEntry {
