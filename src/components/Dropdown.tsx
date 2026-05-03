@@ -19,7 +19,6 @@ interface DropdownProps {
   onKeyDown?: (event: KeyboardEvent<HTMLInputElement>) => void;
   onTriggerKeyDown?: (event: KeyboardEvent<HTMLButtonElement>) => void;
   inputRef?: (element: HTMLInputElement | null) => void;
-  triggerRef?: (element: HTMLButtonElement | null) => void;
 }
 
 export function Dropdown({
@@ -33,7 +32,6 @@ export function Dropdown({
   onKeyDown,
   onTriggerKeyDown,
   inputRef,
-  triggerRef,
 }: DropdownProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");

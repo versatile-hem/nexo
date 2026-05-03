@@ -140,7 +140,7 @@ export function DailyOperationsPage() {
 
       return result;
     },
-    onSuccess: (results) => {
+    onSuccess: () => {
       toast.success("Daily operations saved and stock updated.");
       queryClient.invalidateQueries({ queryKey: ["products"] });
       queryClient.invalidateQueries({ queryKey: ["stock-movements"] });
