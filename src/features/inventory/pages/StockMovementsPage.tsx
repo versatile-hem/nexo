@@ -7,9 +7,41 @@ import { Button } from "@/components/ui/button";
 import { Dropdown } from "@/components/Dropdown";
 import { EmptyState, ErrorState } from "@/components/shared/States";
 import { Skeleton } from "@/components/ui/skeleton";
-import { StockMovement } from "@/mocks/types";
+import { StockMovement, SalesChannel } from "@/mocks/types";
 import { inventoryService } from "@/services/inventoryService";
 import { productService } from "@/services/productService";
+
+// Map backend channel format to SalesChannel
+function mapToSalesChannel(channel: string | undefined): SalesChannel | "Manual" {
+  if (!channel || channel.trim() === "") return "Manual";
+  
+  let normalizedChannel = channel.trim();
+  
+  // Handle "courier=" format by extracting the value after "="
+  if (normalizedChannel.includes("=")) {
+    const parts = normalizedChannel.split("=");
+    normalizedChannel = parts[parts.length - 1].trim();
+  }
+  
+  if (!normalizedChannel) return "Manual";
+  
+  normalizedChannel = normalizedChannel.toUpperCase();
+  
+  const channelMap: Record<string, SalesChannel> = {
+    "MEESHO": "Meesho",
+    "FLIPKART": "Flipkart",
+    "AMAZON": "Amazon",
+    "OFFLINE": "Offline",
+    "WAREHOUSE": "Offline",
+    // Courier names to channels
+    "SHADOWFAX": "Meesho",
+    "DELHIVERY": "Meesho",
+    "XPRESSBEES": "Meesho",
+    "EKART": "Amazon",
+  };
+  
+  return channelMap[normalizedChannel] || normalizedChannel as SalesChannel;
+}
 
 export function StockMovementsPage() {
   const [type, setType] = useState<"IN" | "OUT" | "">("");
@@ -241,41 +273,44 @@ export function StockMovementsPage() {
                     const movementDate = movement.createdAt
                       ? new Date(movement.createdAt).toLocaleDateString()
                       : movement.date;
-                    const channel = movement.reference || "Manual";
                     const type = movement.type;
 
                     if (hasItems) {
-                      return items.map((item, idx) => (
-                        <tr
-                          key={`${movement.id}-${idx}`}
-                          className="border-b border-black/5 hover:bg-black/2 dark:border-white/5 dark:hover:bg-white/2"
-                        >
-                          <td className="px-3 py-3">
-                            <p className="font-medium">{item.productName}</p>
-                            {item.sku && <p className="text-xs opacity-60">{item.sku}</p>}
-                          </td>
-                          <td className="px-3 py-3 text-right font-semibold">{item.quantity}</td>
-                          <td className="px-3 py-3 text-center">
-                            <span className="inline-block rounded bg-blue-100 px-2 py-1 text-xs font-semibold text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
-                              {channel}
-                            </span>
-                          </td>
-                          <td className="px-3 py-3 text-center">
-                            <span
-                              className={`inline-block rounded px-2 py-1 text-xs font-semibold ${
-                                type === "IN"
-                                  ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                                  : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-                              }`}
-                            >
-                              {type}
-                            </span>
-                          </td>
-                          <td className="px-3 py-3 text-xs opacity-70">{movementDate}</td>
-                        </tr>
-                      ));
+                      return items.map((item, idx) => {
+                        const itemChannel = item.channel || item.salesChannel || movement.channel || movement.salesChannel || "Manual";
+                        return (
+                          <tr
+                            key={`${movement.id}-${idx}`}
+                            className="border-b border-black/5 hover:bg-black/2 dark:border-white/5 dark:hover:bg-white/2"
+                          >
+                            <td className="px-3 py-3">
+                              <p className="font-medium">{item.productName}</p>
+                              {item.sku && <p className="text-xs opacity-60">{item.sku}</p>}
+                            </td>
+                            <td className="px-3 py-3 text-right font-semibold">{item.quantity}</td>
+                            <td className="px-3 py-3 text-center">
+                              <span className="inline-block rounded bg-blue-100 px-2 py-1 text-xs font-semibold text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                                {itemChannel}
+                              </span>
+                            </td>
+                            <td className="px-3 py-3 text-center">
+                              <span
+                                className={`inline-block rounded px-2 py-1 text-xs font-semibold ${
+                                  type === "IN"
+                                    ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                                    : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                                }`}
+                              >
+                                {type}
+                              </span>
+                            </td>
+                            <td className="px-3 py-3 text-xs opacity-70">{movementDate}</td>
+                          </tr>
+                        );
+                      });
                     }
                     const qty = movement.qty || 0;
+                    const channel = movement.channel || movement.salesChannel || "Manual";
                     return (
                       <tr
                         key={movement.id}
