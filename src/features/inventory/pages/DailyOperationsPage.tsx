@@ -47,7 +47,6 @@ export function DailyOperationsPage() {
   } = useDailyOpsStore();
 
   const [rawInput, setRawInput] = useState("Shadowfax=46 ebook\nVolmo=113 ebook");
-  const [updatedBalances, setUpdatedBalances] = useState<Array<{ productId: string; quantity: number }>>([]);
   const refs = useRef<Record<string, Focusable>>({});
 
   const summary = useMemo(() => {
@@ -143,9 +142,6 @@ export function DailyOperationsPage() {
     },
     onSuccess: (results) => {
       toast.success("Daily operations saved and stock updated.");
-      // Handle both array and object responses from batch endpoint
-      const balances = Array.isArray(results) ? results : (results?.operations ? results.operations : []);
-      setUpdatedBalances(balances);
       queryClient.invalidateQueries({ queryKey: ["products"] });
       queryClient.invalidateQueries({ queryKey: ["stock-movements"] });
       queryClient.invalidateQueries({ queryKey: ["daily-reports"] });
@@ -333,13 +329,4 @@ function focusCell(
 ) {
   const key = `${section}-${rowIndex}-${colIndex}`;
   refs[key]?.focus();
-}
-
-function SummaryRow({ label, value, emphasized = false }: { label: string; value: number; emphasized?: boolean }) {
-  return (
-    <div className="flex items-center justify-between">
-      <span className="opacity-70">{label}</span>
-      <span className={emphasized ? "text-lg font-bold" : "font-semibold"}>{value}</span>
-    </div>
-  );
 }

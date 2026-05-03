@@ -11,38 +11,6 @@ import { StockMovement, SalesChannel } from "@/mocks/types";
 import { inventoryService } from "@/services/inventoryService";
 import { productService } from "@/services/productService";
 
-// Map backend channel format to SalesChannel
-function mapToSalesChannel(channel: string | undefined): SalesChannel | "Manual" {
-  if (!channel || channel.trim() === "") return "Manual";
-  
-  let normalizedChannel = channel.trim();
-  
-  // Handle "courier=" format by extracting the value after "="
-  if (normalizedChannel.includes("=")) {
-    const parts = normalizedChannel.split("=");
-    normalizedChannel = parts[parts.length - 1].trim();
-  }
-  
-  if (!normalizedChannel) return "Manual";
-  
-  normalizedChannel = normalizedChannel.toUpperCase();
-  
-  const channelMap: Record<string, SalesChannel> = {
-    "MEESHO": "Meesho",
-    "FLIPKART": "Flipkart",
-    "AMAZON": "Amazon",
-    "OFFLINE": "Offline",
-    "WAREHOUSE": "Offline",
-    // Courier names to channels
-    "SHADOWFAX": "Meesho",
-    "DELHIVERY": "Meesho",
-    "XPRESSBEES": "Meesho",
-    "EKART": "Amazon",
-  };
-  
-  return channelMap[normalizedChannel] || normalizedChannel as SalesChannel;
-}
-
 export function StockMovementsPage() {
   const [type, setType] = useState<"IN" | "OUT" | "">("");
   const [startDate, setStartDate] = useState("");
@@ -277,7 +245,7 @@ export function StockMovementsPage() {
 
                     if (hasItems) {
                       return items.map((item, idx) => {
-                        const itemChannel = item.channel || item.salesChannel || movement.channel || movement.salesChannel || "Manual";
+                        const itemChannel = ((item as any).channel || (item as any).salesChannel || (movement as any).channel || (movement as any).salesChannel || "Manual") as SalesChannel | "Manual";
                         return (
                           <tr
                             key={`${movement.id}-${idx}`}
@@ -310,7 +278,7 @@ export function StockMovementsPage() {
                       });
                     }
                     const qty = movement.qty || 0;
-                    const channel = movement.channel || movement.salesChannel || "Manual";
+                    const channel = (((movement as any).channel || (movement as any).salesChannel || "Manual") as SalesChannel | "Manual");
                     return (
                       <tr
                         key={movement.id}
