@@ -223,7 +223,7 @@ export function DailyOperationsPage() {
   }
 
   return (
-    <div className="grid gap-4 xl:grid-cols-[1fr_320px]">
+    <div className="mx-auto max-w-7xl px-4">
       <div className="space-y-4">
         <Card>
           <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6">
@@ -298,30 +298,6 @@ export function DailyOperationsPage() {
           />
         </Card>
       </div>
-
-      <Card className="h-fit">
-        <h3 className="text-lg font-semibold">Summary</h3>
-        <div className="mt-4 space-y-3 text-sm">
-          <SummaryRow label="Total Orders Quantity" value={summary.totalOrdersQty} />
-          <SummaryRow label="Total Returns Quantity" value={summary.totalReturnsQty} />
-          <SummaryRow label="Net Stock Impact" value={summary.netStockImpact} emphasized />
-        </div>
-
-        <div className="mt-5">
-          <h4 className="text-sm font-semibold">Updated Inventory Balance</h4>
-          {updatedBalances.length === 0 ? (
-            <p className="mt-2 text-xs opacity-70">Save a daily operation to view balance response.</p>
-          ) : (
-            <ul className="mt-2 space-y-2">
-              {updatedBalances.map((item, idx) => (
-                <li key={`${item.productId}-${idx}`} className="rounded-md border border-black/10 px-2 py-1 text-xs dark:border-white/20">
-                  Product {item.productId}: <span className="font-semibold">{item.quantity}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      </Card>
     </div>
   );
 }
