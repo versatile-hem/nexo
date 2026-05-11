@@ -104,7 +104,6 @@ export function ReturnsTable({
                     <Dropdown
                       value={row.unit}
                       options={unitOptions}
-                      triggerRef={(el) => registerRef(`returns-${index}-2`, el)}
                       onTriggerKeyDown={(e) => onKeyNav(e, "returns", index, 2, 3)}
                       onChange={(value) => onUpdate(index, { unit: value as DailyOpsReturnRow["unit"] })}
                     />
