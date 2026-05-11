@@ -89,7 +89,6 @@ export function OrdersTable({
                       value={row.courier}
                       options={courierOptions}
                       placeholder="Select courier"
-                      triggerRef={(el) => registerRef(`orders-${index}-0`, el)}
                       onTriggerKeyDown={(e) => onKeyNav(e, "orders", index, 0, 4)}
                       onChange={(value) => onUpdate(index, { courier: value })}
                     />
@@ -126,7 +125,6 @@ export function OrdersTable({
                     <Dropdown
                       value={row.unit}
                       options={unitOptions}
-                      triggerRef={(el) => registerRef(`orders-${index}-3`, el)}
                       onTriggerKeyDown={(e) => onKeyNav(e, "orders", index, 3, 4)}
                       onChange={(value) => onUpdate(index, { unit: value as DailyOpsOrderRow["unit"] })}
                     />
