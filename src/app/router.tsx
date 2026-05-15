@@ -26,6 +26,9 @@ import { ReturnHandlingPage } from "@/features/orders/pages/ReturnHandlingPage";
 import { ReportsPage } from "@/features/dashboard/ReportsPage";
 import { SettingsPage } from "@/features/dashboard/SettingsPage";
 import { UnauthorizedPage } from "@/features/dashboard/UnauthorizedPage";
+import { AnalyticsHome } from "@/features/analytics/pages/AnalyticsHome";
+import { UploadWorkflow } from "@/features/analytics/pages/UploadWorkflow";
+import { HistoricalDashboard } from "@/features/analytics/pages/HistoricalDashboard";
 import { ProtectedRoute } from "@/routes/ProtectedRoute";
 import { useAuthStore } from "@/store/authStore";
 import { isAdmin, isFieldSalesExecutive } from "@/utils/roleUtils";
@@ -209,6 +212,19 @@ export const appRouter = createBrowserRouter([
             <SettingsPage />
           </ProtectedRoute>
         ),
+      },
+      {
+        path: "inventory-insights",
+        element: (
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <AnalyticsHome />
+          </ProtectedRoute>
+        ),
+        children: [
+          { path: "upload", element: <UploadWorkflow /> },
+          { path: "history", element: <HistoricalDashboard /> },
+          { index: true, element: <Navigate to="upload" replace /> },
+        ],
       },
       { path: "unauthorized", element: <UnauthorizedPage /> },
       { path: "*", element: <Navigate to="/dashboard" replace /> },

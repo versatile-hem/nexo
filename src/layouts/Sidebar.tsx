@@ -296,6 +296,19 @@ export function Sidebar({ collapsed }: { collapsed: boolean }) {
               ) : null}
             </div>
 
+            <NavLink
+              to="/inventory-insights/upload"
+              className={({ isActive }) =>
+                cn(
+                  "flex items-center gap-2 rounded-xl px-3 py-2 text-sm transition",
+                  isActive ? "bg-nexo-accent text-white" : "hover:bg-black/5 dark:hover:bg-white/10",
+                )
+              }
+            >
+              <FileBarChart2 size={16} />
+              {!collapsed ? <span>Analytics</span> : null}
+            </NavLink>
+
             {bottomNav.map((item) => {
               const Icon = item.icon;
               return (
