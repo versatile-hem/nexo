@@ -10,7 +10,7 @@
  * - Historical data grid with export
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Filter, Calendar, BarChart3 } from 'lucide-react';
 import { KPICard } from '../components/Analytics/KPICard';
 import {
@@ -26,6 +26,13 @@ import { FilterDrawer } from '../components/Analytics/FilterDrawer';
 import { AppliedFiltersBar } from '../components/Analytics/AppliedFiltersBar';
 import { AnalyticsDataGrid } from '../components/Analytics/AnalyticsDataGrid';
 import { ExportOptions } from '../components/Analytics/ExportOptions';
+import {
+  SkeletonLoader,
+  KPICardSkeleton,
+  ChartSkeleton,
+  GridSkeleton,
+  FilterBarSkeleton,
+} from '../components/Shared/SkeletonLoaders';
 import { analyticsService } from '../services/analyticsService';
 import type { AnalyticsMetrics } from '../types/analytics';
 
@@ -59,56 +66,98 @@ export function HistoricalDashboard() {
     loadData();
   }, [thirtyDaysAgo, today]);
 
+  // Memoize charts to prevent unnecessary re-renders
+  const chartComponents = useMemo(
+    () =>
+      metrics ? (
+        <>
+          <RevenueTrendChart data={metrics.trends} />
+          <ProfitTrendChart data={metrics.trends} />
+          <MarketplacePerformanceChart data={metrics.marketplaceMetrics} />
+          <TopProductsChart data={metrics.topProducts} />
+          <ProductContributionChart data={metrics.productMetrics} />
+          <MarginDistributionChart data={metrics.productMetrics} />
+        </>
+      ) : null,
+    [metrics]
+  );
+
   if (loading || !metrics) {
     return (
-      <div className="space-y-6 p-8">
-        <div className="h-20 animate-pulse rounded-lg bg-slate-200 dark:bg-slate-700" />
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="h-32 animate-pulse rounded-lg bg-slate-200 dark:bg-slate-700" />
-          ))}
+      <div className="space-y-8 p-4 md:p-8">
+        {/* Header skeleton */}
+        <div className="space-y-2">
+          <SkeletonLoader className="h-8 w-64" />
+          <SkeletonLoader className="h-4 w-96" />
         </div>
+
+        {/* Controls skeleton */}
+        <FilterBarSkeleton />
+
+        {/* KPI skeleton */}
+        <div>
+          <SkeletonLoader className="mb-4 h-6 w-48" />
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <KPICardSkeleton key={i} />
+            ))}
+          </div>
+        </div>
+
+        {/* Charts skeleton */}
+        <div>
+          <SkeletonLoader className="mb-4 h-6 w-48" />
+          <div className="grid gap-6 lg:grid-cols-2">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <ChartSkeleton key={i} />
+            ))}
+          </div>
+        </div>
+
+        {/* Grid skeleton */}
+        <GridSkeleton />
       </div>
     );
   }
 
   return (
-    <div className="space-y-8 p-8">
+    <div className="space-y-6 p-4 md:space-y-8 md:p-8">
       {/* Header */}
       <div>
-        <h1 className="mb-2 text-3xl font-bold text-slate-900 dark:text-white">
+        <h1 className="mb-2 text-2xl font-bold md:text-3xl text-slate-900 dark:text-white">
           Inventory Analytics
         </h1>
-        <p className="text-slate-600 dark:text-slate-400">
+        <p className="text-sm md:text-base text-slate-600 dark:text-slate-400">
           View comprehensive analytics and insights from your uploaded reports.
         </p>
       </div>
 
       {/* Sticky Controls */}
-      <div className="sticky top-0 z-10 rounded-2xl border border-slate-200 bg-white/95 p-4 shadow-md backdrop-blur-sm dark:border-slate-700 dark:bg-slate-900/95">
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="flex items-center gap-2 text-sm">
-            <Calendar size={16} className="text-slate-500" />
+      <div className="sticky top-0 z-10 rounded-2xl border border-slate-200 bg-white/95 p-3 shadow-md backdrop-blur-sm dark:border-slate-700 dark:bg-slate-900/95 md:p-4">
+        <div className="flex flex-wrap items-center gap-2 md:gap-4">
+          <div className="flex items-center gap-2 text-xs md:text-sm">
+            <Calendar size={14} className="md:h-4 md:w-4 text-slate-500" />
             <span className="font-medium text-slate-700 dark:text-slate-300">
               {thirtyDaysAgo} to {today}
             </span>
           </div>
 
-          <div className="flex items-center gap-2 text-sm">
-            <BarChart3 size={16} className="text-slate-500" />
+          <div className="flex items-center gap-2 text-xs md:text-sm">
+            <BarChart3 size={14} className="md:h-4 md:w-4 text-slate-500" />
             <span className="font-medium text-slate-700 dark:text-slate-300">
               {metrics.productMetrics.length} products
             </span>
           </div>
 
-          <div className="ml-auto flex items-center gap-3">
+          <div className="ml-auto flex flex-col gap-2 sm:flex-row sm:gap-2">
             <ExportOptions />
             <button
               onClick={() => setIsFilterOpen(true)}
-              className="inline-flex items-center gap-2 rounded-lg bg-nexo-accent px-4 py-2 text-sm font-medium text-white transition hover:opacity-90"
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-nexo-accent px-3 py-2 text-xs md:px-4 md:text-sm font-medium text-white transition hover:opacity-90"
             >
-              <Filter size={16} />
-              Advanced Filters
+              <Filter size={14} className="md:h-4 md:w-4" />
+              <span className="hidden sm:inline">Advanced Filters</span>
+              <span className="sm:hidden">Filters</span>
             </button>
           </div>
         </div>
@@ -119,10 +168,10 @@ export function HistoricalDashboard() {
 
       {/* Executive KPI Section */}
       <div className="space-y-4">
-        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+        <h2 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-white">
           Key Metrics
         </h2>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-3 md:gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <KPICard
             label="Total Revenue"
             value={metrics.kpis.totalRevenue}
@@ -168,41 +217,36 @@ export function HistoricalDashboard() {
 
       {/* Charts Grid */}
       <div className="space-y-4">
-        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+        <h2 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-white">
           Analytics Charts
         </h2>
-        <div className="grid gap-6 lg:grid-cols-2">
-          <RevenueTrendChart data={metrics.trends} />
-          <ProfitTrendChart data={metrics.trends} />
-          <MarketplacePerformanceChart data={metrics.marketplaceMetrics} />
-          <TopProductsChart data={metrics.topProducts} />
-          <ProductContributionChart data={metrics.productMetrics} />
-          <MarginDistributionChart data={metrics.productMetrics} />
+        <div className="grid gap-4 md:gap-6 lg:grid-cols-2">
+          {chartComponents}
         </div>
       </div>
 
       {/* AI Insights & Actions */}
-      <div className="grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2" />
+      <div className="grid gap-4 md:gap-6 lg:grid-cols-3">
+        <div className="hidden lg:col-span-2 lg:block" />
         <div>
           <AIInsightPanel insights={metrics.aiInsights} />
         </div>
       </div>
 
       {/* Analytics Data Grid */}
-      <div className="space-y-4 rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-900">
-        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+      <div className="space-y-4 rounded-xl border border-slate-200 bg-white p-3 md:p-6 dark:border-slate-700 dark:bg-slate-900">
+        <h2 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-white">
           Historical Records
         </h2>
         {gridData ? (
           <AnalyticsDataGrid data={gridData} isLoading={loading} />
         ) : (
-          <div className="h-64 animate-pulse rounded-lg bg-slate-200 dark:bg-slate-700" />
+          <GridSkeleton />
         )}
       </div>
 
       {/* Footer */}
-      <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-center text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400">
+      <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 md:p-4 text-center text-xs md:text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400">
         Last updated: {new Date().toLocaleString('en-IN')} • Data from{' '}
         <span className="font-semibold">{metrics.dateRange.start}</span> to{' '}
         <span className="font-semibold">{metrics.dateRange.end}</span>
