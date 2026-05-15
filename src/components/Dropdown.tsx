@@ -19,7 +19,6 @@ interface DropdownProps {
   onKeyDown?: (event: KeyboardEvent<HTMLInputElement>) => void;
   onTriggerKeyDown?: (event: KeyboardEvent<HTMLButtonElement>) => void;
   inputRef?: (element: HTMLInputElement | null) => void;
-  triggerRef?: (element: HTMLButtonElement | null) => void;
 }
 
 export function Dropdown({
@@ -33,13 +32,12 @@ export function Dropdown({
   onKeyDown,
   onTriggerKeyDown,
   inputRef,
-  triggerRef,
 }: DropdownProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [menuPosition, setMenuPosition] = useState<{ top: number; left: number; width: number } | null>(null);
-  const triggerButtonRef = useRef<HTMLButtonElement>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
+  const triggerButtonRef = useRef<HTMLButtonElement | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
 
   const selected = options.find((item) => item.value === value);
   const filtered = useMemo(() => {
@@ -51,13 +49,15 @@ export function Dropdown({
   useEffect(() => {
     if (open && triggerButtonRef.current) {
       const rect = triggerButtonRef.current.getBoundingClientRect();
+      // Use viewport-relative positioning for better accuracy
       setMenuPosition({
-        top: rect.bottom + window.scrollY,
-        left: rect.left + window.scrollX,
+        top: rect.bottom + 4, // Add 4px spacing
+        left: rect.left,
         width: rect.width,
       });
+      console.log("Dropdown opened at position:", { rect, options: options.length, filtered: filtered.length });
     }
-  }, [open]);
+  }, [open, options.length]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -80,10 +80,7 @@ export function Dropdown({
     <div className={cn("relative", className)}>
       <button
         type="button"
-        ref={(el) => {
-          triggerButtonRef.current = el;
-          if (triggerRef) triggerRef(el);
-        }}
+        ref={triggerButtonRef}
         className={cn(
           "flex w-full items-center justify-between rounded-xl border border-black/10 bg-white/80 px-3 py-2 text-left text-sm",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-nexo-accent/70",
@@ -106,6 +103,9 @@ export function Dropdown({
                 top: `${menuPosition.top}px`,
                 left: `${menuPosition.left}px`,
                 width: `${menuPosition.width}px`,
+                maxHeight: "200px",
+                minWidth: "150px",
+                pointerEvents: "auto",
               }}
             >
               {searchable ? (

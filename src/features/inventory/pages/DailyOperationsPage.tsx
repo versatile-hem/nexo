@@ -10,6 +10,7 @@ import { useDailyOpsStore } from "@/store/dailyOpsStore";
 import { dailyOpsService } from "@/services/dailyOpsService";
 import { productService } from "@/services/productService";
 import { operationsApi } from "@/services/operationsApi";
+import { convertDatetimeLocalToISO } from "@/utils/format";
 import { OrdersTable } from "@/features/inventory/components/OrdersTable";
 import { ReturnsTable } from "@/features/inventory/components/ReturnsTable";
 import { useIsMobile } from "@/hooks/useIsMobile";
@@ -47,7 +48,6 @@ export function DailyOperationsPage() {
   } = useDailyOpsStore();
 
   const [rawInput, setRawInput] = useState("Shadowfax=46 ebook\nVolmo=113 ebook");
-  const [updatedBalances, setUpdatedBalances] = useState<Array<{ productId: string; quantity: number }>>([]);
   const refs = useRef<Record<string, Focusable>>({});
 
   const summary = useMemo(() => {
@@ -96,6 +96,9 @@ export function DailyOperationsPage() {
       }
 
       // Build operations array for batch endpoint
+      // Convert the date string to ISO format with correct timezone handling
+      const movementTime = date ? convertDatetimeLocalToISO(`${date}T12:00`) : new Date().toISOString();
+      
       const operations = [
         ...cleanOrders.map((row) => {
           const product = resolveStockProduct(row, byId, byName)!;
@@ -106,7 +109,7 @@ export function DailyOperationsPage() {
             unit: row.unit,
             courier: row.courier,
             channel: channel as "Meesho" | "Flipkart" | "Offline" | "Amazon" | undefined,
-            movementTime: new Date().toISOString(),
+            movementTime,
           };
         }),
         ...cleanReturns.map((row) => {
@@ -118,7 +121,7 @@ export function DailyOperationsPage() {
             unit: row.unit,
             courier: row.courier,
             channel: channel as "Meesho" | "Flipkart" | "Offline" | "Amazon" | undefined,
-            movementTime: new Date().toISOString(),
+            movementTime,
           };
         }),
       ];
@@ -141,11 +144,8 @@ export function DailyOperationsPage() {
 
       return result;
     },
-    onSuccess: (results) => {
+    onSuccess: () => {
       toast.success("Daily operations saved and stock updated.");
-      // Handle both array and object responses from batch endpoint
-      const balances = Array.isArray(results) ? results : (results?.operations ? results.operations : []);
-      setUpdatedBalances(balances);
       queryClient.invalidateQueries({ queryKey: ["products"] });
       queryClient.invalidateQueries({ queryKey: ["stock-movements"] });
       queryClient.invalidateQueries({ queryKey: ["daily-reports"] });
@@ -333,13 +333,4 @@ function focusCell(
 ) {
   const key = `${section}-${rowIndex}-${colIndex}`;
   refs[key]?.focus();
-}
-
-function SummaryRow({ label, value, emphasized = false }: { label: string; value: number; emphasized?: boolean }) {
-  return (
-    <div className="flex items-center justify-between">
-      <span className="opacity-70">{label}</span>
-      <span className={emphasized ? "text-lg font-bold" : "font-semibold"}>{value}</span>
-    </div>
-  );
 }

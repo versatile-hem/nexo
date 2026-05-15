@@ -51,7 +51,6 @@ export function EntryCard({
   const navigate = useNavigate();
   const productRef = useRef<HTMLInputElement | null>(null);
   const qtyRef = useRef<HTMLInputElement | null>(null);
-  const unitRef = useRef<HTMLButtonElement | null>(null);
   const [scannerOpen, setScannerOpen] = useState(false);
   const [lastScan, setLastScan] = useState<{ code: string; name?: string } | null>(null);
   const [notFoundBarcode, setNotFoundBarcode] = useState<string | null>(null);
@@ -181,7 +180,6 @@ export function EntryCard({
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 e.preventDefault();
-                unitRef.current?.focus();
               }
             }}
           />
@@ -192,9 +190,6 @@ export function EntryCard({
             value={row.unit}
             options={unitOptions}
             className="[&>button]:min-h-11"
-            triggerRef={(el) => {
-              unitRef.current = el;
-            }}
             onChange={(value) => onUpdate(index, { unit: value as DailyOpsUnit })}
             onTriggerKeyDown={(e) => {
               if (e.key === "Enter") {

@@ -7,6 +7,16 @@ import { Input } from "@/components/ui/input";
 import { DailyOpsReturnRow, ProductOption } from "@/mocks/types";
 import { cn } from "@/utils/cn";
 
+const courierOptions: DropdownOption[] = [
+  { value: "Shadowfax", label: "Shadowfax" },
+  { value: "Delhivery", label: "Delhivery" },
+  { value: "Xpressbees", label: "Xpressbees" },
+  { value: "Ekart", label: "Ekart" },
+  { value: "Amazon Shipping", label: "Amazon Shipping" },
+  { value: "Volmo", label: "Volmo" },
+  { value: "Other", label: "Other" },
+];
+
 const unitOptions: DropdownOption[] = [
   { value: "nos", label: "nos" },
   { value: "box", label: "box" },
@@ -55,10 +65,11 @@ export function ReturnsTable({
         </Button>
       </div>
 
-      <div className="h-[400px] overflow-y-auto overflow-x-auto rounded-xl border border-black/10 dark:border-white/20">
-        <table className="w-full min-w-[760px] text-left text-sm">
+      <div className="relative h-[400px] overflow-y-auto overflow-x-auto rounded-xl border border-black/10 dark:border-white/20">
+        <table className="w-full min-w-[880px] text-left text-sm">
           <thead className="sticky top-0 z-10 bg-[#edf3e6] text-xs uppercase tracking-wide dark:bg-[#203022]">
             <tr>
+              <th className="px-3 py-3">Courier</th>
               <th className="px-3 py-3">Product</th>
               <th className="px-3 py-3">Qty</th>
               <th className="px-3 py-3">Unit</th>
@@ -73,30 +84,41 @@ export function ReturnsTable({
               return (
                 <tr key={`return-${index}`} className="border-t border-black/5 align-top hover:bg-black/[0.02] dark:border-white/10 dark:hover:bg-white/[0.02]">
                   <td className="px-3 py-2">
+                    <Dropdown
+                      searchable
+                      required
+                      value={row.courier || ""}
+                      options={courierOptions}
+                      placeholder="Select courier"
+                      onTriggerKeyDown={(e) => onKeyNav(e, "returns", index, 0, 4)}
+                      onChange={(value) => onUpdate(index, { courier: value })}
+                    />
+                  </td>
+                  <td className="px-3 py-2">
                     <Autocomplete
                       value={row.productName}
                       options={options}
                       loading={productLoading}
                       placeholder="Search product or type manually"
                       invalid={invalidProduct}
-                      inputRef={(el) => registerRef(`returns-${index}-0`, el)}
+                      inputRef={(el) => registerRef(`returns-${index}-1`, el)}
                       onChange={(value) => onUpdate(index, { productId: undefined, productName: value })}
                       onSelect={(option) =>
                         onUpdate(index, { productId: option.value, productName: option.label })
                       }
-                      onKeyDown={(e) => onKeyNav(e, "returns", index, 0, 3)}
+                      onKeyDown={(e) => onKeyNav(e, "returns", index, 1, 4)}
                     />
                     {invalidProduct ? <p className="mt-1 text-xs text-red-600">Product is required</p> : null}
                   </td>
                   <td className="px-3 py-2">
                     <Input
-                      ref={(el) => registerRef(`returns-${index}-1`, el)}
+                      ref={(el) => registerRef(`returns-${index}-2`, el)}
                       type="number"
                       min={1}
                       value={row.qty}
                       className={cn(invalidQty ? "border-red-400 focus:border-red-500" : "")}
                       onChange={(e) => onUpdate(index, { qty: Number(e.target.value) || 0 })}
-                      onKeyDown={(e) => onKeyNav(e, "returns", index, 1, 3)}
+                      onKeyDown={(e) => onKeyNav(e, "returns", index, 2, 4)}
                     />
                     {invalidQty ? <p className="mt-1 text-xs text-red-600">Quantity must be greater than 0</p> : null}
                   </td>
@@ -104,8 +126,7 @@ export function ReturnsTable({
                     <Dropdown
                       value={row.unit}
                       options={unitOptions}
-                      triggerRef={(el) => registerRef(`returns-${index}-2`, el)}
-                      onTriggerKeyDown={(e) => onKeyNav(e, "returns", index, 2, 3)}
+                      onTriggerKeyDown={(e) => onKeyNav(e, "returns", index, 3, 4)}
                       onChange={(value) => onUpdate(index, { unit: value as DailyOpsReturnRow["unit"] })}
                     />
                   </td>
