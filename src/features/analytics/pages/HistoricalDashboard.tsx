@@ -22,31 +22,41 @@ import {
   MarginDistributionChart,
 } from '../components/Analytics/Charts';
 import { AIInsightPanel } from '../components/Analytics/AIInsightPanel';
+import { FilterDrawer } from '../components/Analytics/FilterDrawer';
+import { AppliedFiltersBar } from '../components/Analytics/AppliedFiltersBar';
+import { AnalyticsDataGrid } from '../components/Analytics/AnalyticsDataGrid';
+import { ExportOptions } from '../components/Analytics/ExportOptions';
 import { analyticsService } from '../services/analyticsService';
 import type { AnalyticsMetrics } from '../types/analytics';
 
 export function HistoricalDashboard() {
   const [metrics, setMetrics] = useState<AnalyticsMetrics | null>(null);
+  const [gridData, setGridData] = useState<any[] | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
   const today = new Date().toISOString().split('T')[0];
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
     .toISOString()
     .split('T')[0];
 
   useEffect(() => {
-    const loadMetrics = async () => {
+    const loadData = async () => {
       setLoading(true);
       try {
-        const data = await analyticsService.getMetrics(thirtyDaysAgo, today);
-        setMetrics(data);
+        const [metricsData, gridResponse] = await Promise.all([
+          analyticsService.getMetrics(thirtyDaysAgo, today),
+          analyticsService.getHistoricalData(0, 50),
+        ]);
+        setMetrics(metricsData);
+        setGridData(gridResponse.data);
       } catch (error) {
-        console.error('Failed to load metrics:', error);
+        console.error('Failed to load analytics data:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    loadMetrics();
+    loadData();
   }, [thirtyDaysAgo, today]);
 
   if (loading || !metrics) {
@@ -91,14 +101,21 @@ export function HistoricalDashboard() {
             </span>
           </div>
 
-          <div className="ml-auto">
-            <button className="inline-flex items-center gap-2 rounded-lg bg-nexo-accent px-4 py-2 text-sm font-medium text-white transition hover:opacity-90">
+          <div className="ml-auto flex items-center gap-3">
+            <ExportOptions />
+            <button
+              onClick={() => setIsFilterOpen(true)}
+              className="inline-flex items-center gap-2 rounded-lg bg-nexo-accent px-4 py-2 text-sm font-medium text-white transition hover:opacity-90"
+            >
               <Filter size={16} />
               Advanced Filters
             </button>
           </div>
         </div>
       </div>
+
+      {/* Applied Filters Bar */}
+      <AppliedFiltersBar />
 
       {/* Executive KPI Section */}
       <div className="space-y-4">
@@ -172,12 +189,27 @@ export function HistoricalDashboard() {
         </div>
       </div>
 
+      {/* Analytics Data Grid */}
+      <div className="space-y-4 rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-900">
+        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+          Historical Records
+        </h2>
+        {gridData ? (
+          <AnalyticsDataGrid data={gridData} isLoading={loading} />
+        ) : (
+          <div className="h-64 animate-pulse rounded-lg bg-slate-200 dark:bg-slate-700" />
+        )}
+      </div>
+
       {/* Footer */}
       <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-center text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400">
         Last updated: {new Date().toLocaleString('en-IN')} • Data from{' '}
         <span className="font-semibold">{metrics.dateRange.start}</span> to{' '}
         <span className="font-semibold">{metrics.dateRange.end}</span>
       </div>
+
+      {/* Filter Drawer */}
+      <FilterDrawer isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)} />
     </div>
   );
 }

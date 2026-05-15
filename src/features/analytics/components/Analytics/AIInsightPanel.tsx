@@ -81,7 +81,6 @@ export function AIInsightPanel({ insights }: AIInsightPanelProps) {
       <div className="space-y-3">
         {visibleInsights.map((insight) => {
           const severityConf = severityConfig[insight.severity];
-          const SeverityIcon = severityConf.icon;
           const typeConf = typeConfig[insight.type];
           const TypeIcon = typeConf.icon;
 

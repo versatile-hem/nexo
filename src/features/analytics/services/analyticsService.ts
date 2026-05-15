@@ -435,9 +435,7 @@ export const analyticsService = {
       };
     });
 
-    const allRecords = Array.from({ length: totalRecords }, (_, i) => {
-      const product = mockProducts[i % mockProducts.length];
-      const marketplace = marketplaces[i % marketplaces.length];
+    const allRecords = Array.from({ length: totalRecords }, () => {
       const revenue = generateRandomRevenue(5000, 50000);
       const cogs = revenue * 0.4;
       const expense = revenue * 0.15;

@@ -9,7 +9,7 @@
  * - Smooth row hover
  */
 
-import { ChevronDown, AlertCircle, CheckCircle, AlertTriangle, XCircle } from 'lucide-react';
+import { ChevronDown, CheckCircle, AlertTriangle, XCircle } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/utils/cn';
 import type { ProductAnalyticsRecord } from '../../types/reports';

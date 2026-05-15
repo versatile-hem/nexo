@@ -17,7 +17,7 @@
  * - Hover effects
  */
 
-import { TrendingUp, AlertCircle, Zap, RefreshCw, FileCheck, Copy } from 'lucide-react';
+import { TrendingUp, Zap, RefreshCw, FileCheck, Copy } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { cn } from '@/utils/cn';
 import type { ReportSummary } from '../../types/reports';

@@ -20,7 +20,8 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
-import type { TrendData, ProductMetrics, ChannelMetrics } from '../../types/analytics';
+import type { TrendData, ProductMetrics } from '../../types/analytics';
+import type { ChannelMetrics } from '../../types/reports';
 
 const COLORS = {
   primary: '#2c7a4b',

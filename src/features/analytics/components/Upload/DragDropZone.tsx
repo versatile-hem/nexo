@@ -13,9 +13,9 @@
 import { Cloud, AlertCircle, CheckCircle, Loader } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { cn } from '@/utils/cn';
-import { useAnalyticsStore } from '../store/analyticsStore';
-import { analyticsService } from '../services/analyticsService';
-import type { AnalyticsReport } from '../types/reports';
+import { useAnalyticsStore } from '../../store/analyticsStore';
+import { analyticsService } from '../../services/analyticsService';
+import type { AnalyticsReport } from '../../types/reports';
 
 interface DragDropZoneProps {
   onUploadComplete?: (report: AnalyticsReport) => void;
