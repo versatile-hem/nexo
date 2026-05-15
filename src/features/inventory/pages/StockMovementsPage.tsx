@@ -11,6 +11,30 @@ import { StockMovement, SalesChannel } from "@/mocks/types";
 import { inventoryService } from "@/services/inventoryService";
 import { productService } from "@/services/productService";
 
+// Channel logo URLs - local references
+const channelLogos: Record<string, string> = {
+  MEESHO: "/images/products/meesho.png",
+  Meesho: "/images/products/meesho.png",
+  FLIPKART: "/images/products/fk.png",
+  Flipkart: "/images/products/fk.png",
+  AMAZON: "/images/products/amz.png",
+  Amazon: "/images/products/amz.png",
+  "AMAZON SHIPPING": "/images/products/amz.png",
+  "Amazon Shipping": "/images/products/amz.png",
+  OFFLINE: "/images/products/off.png",
+  Offline: "/images/products/off.png",
+  MANUAL: "/images/products/off.png",
+  Manual: "/images/products/off.png",
+};
+
+function getChannelLogo(channel: string | "Manual"): string {
+  const logo = channelLogos[channel];
+  if (!logo) {
+    console.warn(`Missing logo for channel: "${channel}". Available channels: ${Object.keys(channelLogos).join(", ")}`);
+  }
+  return logo || "/images/products/off.png";
+}
+
 export function StockMovementsPage() {
   const [type, setType] = useState<"IN" | "OUT" | "">("");
   const [startDate, setStartDate] = useState("");
@@ -231,6 +255,7 @@ export function StockMovementsPage() {
                     <th className="px-3 py-2 text-right font-semibold">Quantity</th>
                     <th className="px-3 py-2 text-center font-semibold">Channel</th>
                     <th className="px-3 py-2 text-center font-semibold">Type</th>
+                    <th className="px-3 py-2 text-left font-semibold">Movement Time</th>
                     <th className="px-3 py-2 text-left font-semibold">Date</th>
                   </tr>
                 </thead>
@@ -241,6 +266,16 @@ export function StockMovementsPage() {
                     const movementDate = movement.createdAt
                       ? new Date(movement.createdAt).toLocaleDateString()
                       : movement.date;
+                    const movementTime = (movement as any).movementTime
+                      ? new Date((movement as any).movementTime).toLocaleString("en-IN", {
+                          year: "numeric",
+                          month: "2-digit",
+                          day: "2-digit",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          second: "2-digit",
+                        })
+                      : "-";
                     const type = movement.type;
 
                     if (hasItems) {
@@ -257,9 +292,17 @@ export function StockMovementsPage() {
                             </td>
                             <td className="px-3 py-3 text-right font-semibold">{item.quantity}</td>
                             <td className="px-3 py-3 text-center">
-                              <span className="inline-block rounded bg-blue-100 px-2 py-1 text-xs font-semibold text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
-                                {itemChannel}
-                              </span>
+                              <div className="inline-flex items-center justify-center rounded bg-blue-50 px-2 py-1.5 dark:bg-blue-900/20">
+                                <img
+                                  src={getChannelLogo(itemChannel)}
+                                  alt={itemChannel}
+                                  className="h-6 w-6 object-contain"
+                                  title={itemChannel}
+                                  onError={(e) => {
+                                    (e.target as HTMLImageElement).style.display = "none";
+                                  }}
+                                />
+                              </div>
                             </td>
                             <td className="px-3 py-3 text-center">
                               <span
@@ -272,6 +315,7 @@ export function StockMovementsPage() {
                                 {type}
                               </span>
                             </td>
+                            <td className="px-3 py-3 text-xs opacity-70">{movementTime}</td>
                             <td className="px-3 py-3 text-xs opacity-70">{movementDate}</td>
                           </tr>
                         );
@@ -287,9 +331,17 @@ export function StockMovementsPage() {
                         <td className="px-3 py-3 font-medium">{movement.product}</td>
                         <td className="px-3 py-3 text-right font-semibold">{qty}</td>
                         <td className="px-3 py-3 text-center">
-                          <span className="inline-block rounded bg-blue-100 px-2 py-1 text-xs font-semibold text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
-                            {channel}
-                          </span>
+                          <div className="inline-flex items-center justify-center rounded bg-blue-50 px-2 py-1.5 dark:bg-blue-900/20">
+                            <img
+                              src={getChannelLogo(channel)}
+                              alt={channel}
+                              className="h-6 w-6 object-contain"
+                              title={channel}
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).style.display = "none";
+                              }}
+                            />
+                          </div>
                         </td>
                         <td className="px-3 py-3 text-center">
                           <span
@@ -302,6 +354,7 @@ export function StockMovementsPage() {
                             {type}
                           </span>
                         </td>
+                        <td className="px-3 py-3 text-xs opacity-70">{movementTime}</td>
                         <td className="px-3 py-3 text-xs opacity-70">{movementDate}</td>
                       </tr>
                     );

@@ -45,7 +45,7 @@ export const appRouter = createBrowserRouter([
       {
         path: "products",
         element: (
-          <ProtectedRoute allowedRoles={["admin", "operation_manager"]}>
+          <ProtectedRoute allowedRoles={["admin"]}>
             <ProductListPage />
           </ProtectedRoute>
         ),
@@ -53,7 +53,7 @@ export const appRouter = createBrowserRouter([
       {
         path: "products/:productId",
         element: (
-          <ProtectedRoute allowedRoles={["admin", "operation_manager"]}>
+          <ProtectedRoute allowedRoles={["admin"]}>
             <ProductDetailsPage />
           </ProtectedRoute>
         ),
@@ -86,7 +86,7 @@ export const appRouter = createBrowserRouter([
       {
         path: "inventory/stock-movements",
         element: (
-          <ProtectedRoute allowedRoles={["admin"]}>
+          <ProtectedRoute allowedRoles={["admin", "operation_manager"]}>
             <StockMovementsPage />
           </ProtectedRoute>
         ),

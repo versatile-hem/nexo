@@ -10,6 +10,7 @@ import { useDailyOpsStore } from "@/store/dailyOpsStore";
 import { dailyOpsService } from "@/services/dailyOpsService";
 import { productService } from "@/services/productService";
 import { operationsApi } from "@/services/operationsApi";
+import { convertDatetimeLocalToISO } from "@/utils/format";
 import { OrdersTable } from "@/features/inventory/components/OrdersTable";
 import { ReturnsTable } from "@/features/inventory/components/ReturnsTable";
 import { useIsMobile } from "@/hooks/useIsMobile";
@@ -95,6 +96,9 @@ export function DailyOperationsPage() {
       }
 
       // Build operations array for batch endpoint
+      // Convert the date string to ISO format with correct timezone handling
+      const movementTime = date ? convertDatetimeLocalToISO(`${date}T12:00`) : new Date().toISOString();
+      
       const operations = [
         ...cleanOrders.map((row) => {
           const product = resolveStockProduct(row, byId, byName)!;
@@ -105,7 +109,7 @@ export function DailyOperationsPage() {
             unit: row.unit,
             courier: row.courier,
             channel: channel as "Meesho" | "Flipkart" | "Offline" | "Amazon" | undefined,
-            movementTime: new Date().toISOString(),
+            movementTime,
           };
         }),
         ...cleanReturns.map((row) => {
@@ -117,7 +121,7 @@ export function DailyOperationsPage() {
             unit: row.unit,
             courier: row.courier,
             channel: channel as "Meesho" | "Flipkart" | "Offline" | "Amazon" | undefined,
-            movementTime: new Date().toISOString(),
+            movementTime,
           };
         }),
       ];
