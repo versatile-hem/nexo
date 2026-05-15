@@ -126,8 +126,10 @@ export const inventoryService = {
 
       const response = await api.get(`/stock-movements?${params.toString()}`);
       return response.data;
-    } catch {
-      // Fallback to mock data if API fails
+    } catch (error) {
+      // Log error for debugging
+      console.error("Stock movements API error:", error);
+      // Return mock data as fallback
       return {
         content: [...db.stockMovements],
         pageNumber: 0,

@@ -49,13 +49,15 @@ export function Dropdown({
   useEffect(() => {
     if (open && triggerButtonRef.current) {
       const rect = triggerButtonRef.current.getBoundingClientRect();
+      // Use viewport-relative positioning for better accuracy
       setMenuPosition({
-        top: rect.bottom + window.scrollY,
-        left: rect.left + window.scrollX,
+        top: rect.bottom + 4, // Add 4px spacing
+        left: rect.left,
         width: rect.width,
       });
+      console.log("Dropdown opened at position:", { rect, options: options.length, filtered: filtered.length });
     }
-  }, [open]);
+  }, [open, options.length]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -101,6 +103,9 @@ export function Dropdown({
                 top: `${menuPosition.top}px`,
                 left: `${menuPosition.left}px`,
                 width: `${menuPosition.width}px`,
+                maxHeight: "200px",
+                minWidth: "150px",
+                pointerEvents: "auto",
               }}
             >
               {searchable ? (

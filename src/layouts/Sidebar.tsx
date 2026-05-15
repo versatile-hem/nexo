@@ -22,9 +22,10 @@ import { cn } from "@/utils/cn";
 import { useAuthStore } from "@/store/authStore";
 import { isAdmin, isFieldSalesExecutive, isOperationManager } from "@/utils/roleUtils";
 
+// Note: Products is excluded from topNav to restrict access to admin role only
+// It's shown conditionally in the UI based on isAdmin check below
 const topNav = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/products", label: "Products", icon: Boxes },
 ];
 
 const bottomNav = [
@@ -97,19 +98,6 @@ export function Sidebar({ collapsed }: { collapsed: boolean }) {
             </NavLink>
 
             <NavLink
-              to="/products"
-              className={({ isActive }) =>
-                cn(
-                  "flex items-center gap-2 rounded-xl px-3 py-2 text-sm transition",
-                  isActive ? "bg-nexo-accent text-white" : "hover:bg-black/5 dark:hover:bg-white/10",
-                )
-              }
-            >
-              <Boxes size={16} />
-              {!collapsed ? <span>Products</span> : null}
-            </NavLink>
-
-            <NavLink
               to="/inventory/stock-in"
               className={({ isActive }) =>
                 cn(
@@ -133,6 +121,19 @@ export function Sidebar({ collapsed }: { collapsed: boolean }) {
             >
               <ClipboardList size={16} />
               {!collapsed ? <span>Daily Operations</span> : null}
+            </NavLink>
+
+            <NavLink
+              to="/inventory/stock-movements"
+              className={({ isActive }) =>
+                cn(
+                  "flex items-center gap-2 rounded-xl px-3 py-2 text-sm transition",
+                  isActive ? "bg-nexo-accent text-white" : "hover:bg-black/5 dark:hover:bg-white/10",
+                )
+              }
+            >
+              <Activity size={16} />
+              {!collapsed ? <span>Stock Movements</span> : null}
             </NavLink>
 
             <NavLink
@@ -226,6 +227,21 @@ export function Sidebar({ collapsed }: { collapsed: boolean }) {
                 </NavLink>
               );
             })}
+
+            {adminView ? (
+              <NavLink
+                to="/products"
+                className={({ isActive }) =>
+                  cn(
+                    "flex items-center gap-2 rounded-xl px-3 py-2 text-sm transition",
+                    isActive ? "bg-nexo-accent text-white" : "hover:bg-black/5 dark:hover:bg-white/10",
+                  )
+                }
+              >
+                <Boxes size={16} />
+                {!collapsed ? <span>Products</span> : null}
+              </NavLink>
+            ) : null}
 
             <div>
               <button

@@ -13,6 +13,7 @@ const courierOptions: DropdownOption[] = [
   { value: "Xpressbees", label: "Xpressbees" },
   { value: "Ekart", label: "Ekart" },
   { value: "Amazon Shipping", label: "Amazon Shipping" },
+  { value: "Volmo", label: "Volmo" },
   { value: "Other", label: "Other" },
 ];
 
@@ -64,7 +65,7 @@ export function OrdersTable({
         </Button>
       </div>
 
-      <div className="h-[400px] overflow-y-auto overflow-x-auto rounded-xl border border-black/10 dark:border-white/20">
+      <div className="relative h-[400px] overflow-y-auto overflow-x-auto rounded-xl border border-black/10 dark:border-white/20">
         <table className="w-full min-w-[920px] text-left text-sm">
           <thead className="sticky top-0 z-10 bg-[#edf3e6] text-xs uppercase tracking-wide dark:bg-[#203022]">
             <tr>

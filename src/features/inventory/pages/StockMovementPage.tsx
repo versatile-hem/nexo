@@ -12,6 +12,7 @@ import { productService } from "@/services/productService";
 import { inventoryService } from "@/services/inventoryService";
 import { operationsApi } from "@/services/operationsApi";
 import { validatePositiveQuantity } from "@/utils/validation";
+import { convertDatetimeLocalToISO } from "@/utils/format";
 
 interface StockMovementRow {
   productId: string;
@@ -63,7 +64,7 @@ export function StockMovementPage() {
   // Stock In mutation
   const stockInMutation = useMutation({
     mutationFn: () => {
-      const isoTime = new Date(movementTime).toISOString();
+      const isoTime = convertDatetimeLocalToISO(movementTime);
       return operationsApi.stockIn(
         rows.map((row) => ({
           productId: row.productId,
@@ -89,7 +90,7 @@ export function StockMovementPage() {
   // Stock Out mutation
   const stockOutMutation = useMutation({
     mutationFn: () => {
-      const isoTime = new Date(movementTime).toISOString();
+      const isoTime = convertDatetimeLocalToISO(movementTime);
       return Promise.all(
         rows.map((row) =>
           operationsApi.dailyOperation({
