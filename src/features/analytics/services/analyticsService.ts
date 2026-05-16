@@ -1,30 +1,35 @@
 /**
- * Mock Analytics Service
- * Generates realistic analytics data for frontend development
- * Will be replaced with real API calls when backend is ready
+ * Analytics Service - Real API Integration
+ * Makes actual HTTP requests to backend analytics endpoints
+ * Fallback to mock data if API is unavailable
  */
 
+import { api, mockResponse } from '@/services/api';
 import type {
   AnalyticsReport,
-  ProductAnalyticsRecord,
-  ChannelMetrics,
-  ValidationStats,
   ReportListResponse,
   ReportDetailsResponse,
   Marketplace,
 } from '../types/reports';
 import type {
   AnalyticsMetrics,
-  AIInsight,
   AnalyticsDataGridResponse,
   AnalyticsDataGridRow,
   InsightsResponse,
 } from '../types/analytics';
 
-// Simulate API delay
-const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+// API Configuration
+const API_ENDPOINTS = {
+  UPLOAD: '/analytics/upload',
+  REPORTS: '/analytics/reports',
+  REPORT_DETAILS: (id: string) => `/analytics/reports/${id}`,
+  METRICS: '/analytics/metrics',
+  HISTORICAL_DATA: '/analytics/data',
+  INSIGHTS: '/analytics/insights',
+  EXPORT: '/analytics/export',
+};
 
-// Mock products database
+// Fallback mock data generators
 const mockProducts = [
   { sku: 'SKU-1001', name: 'Premium Coffee Beans', category: 'Groceries' },
   { sku: 'SKU-1002', name: 'Portable Scanner', category: 'Electronics' },
@@ -38,459 +43,287 @@ const mockProducts = [
 
 const marketplaces: Marketplace[] = ['MEESHO', 'FLIPKART', 'AMAZON', 'OFFLINE'];
 
-function generateRandomRevenue(min = 5000, max = 50000): number {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
-function generateProductRecord(
-  sku: string,
-  productName: string,
-  marketplace: Marketplace,
-  recordDate: string
-): ProductAnalyticsRecord {
-  const revenue = generateRandomRevenue(5000, 50000);
-  const cogs = revenue * 0.4;
-  const expense = revenue * 0.15;
-  const grossProfit = revenue - cogs;
-  const netProfit = grossProfit - expense;
-  const margin = netProfit / revenue;
-
-  return {
-    sku,
-    productName,
-    category: 'Groceries',
-    marketplace,
-    revenue,
-    cogs,
-    expense,
-    quantity: Math.floor(revenue / 150),
-    grossProfit,
-    netProfit,
-    margin,
-    recordDate,
-    daysInStock: Math.floor(Math.random() * 90) + 5,
-    status: 'valid',
-    validationErrors: [],
-  };
-}
-
-function generateChannelMetrics(marketplace: Marketplace, recordCount: number): ChannelMetrics {
-  const revenue = recordCount * 15000;
-  const profit = revenue * 0.3;
-  const margin = 0.3;
-
-  return {
-    marketplace,
-    revenue,
-    profit,
-    margin,
-    quantity: recordCount * 500,
-    productCount: Math.floor(recordCount / 2),
-  };
-}
-
-function generateValidationStats(totalRecords: number): ValidationStats {
-  const validRecords = Math.floor(totalRecords * 0.96);
-  const duplicateRecords = Math.floor(totalRecords * 0.03);
-  const errorRecords = totalRecords - validRecords - duplicateRecords;
-
-  return {
-    totalRows: totalRecords,
-    validRows: validRecords,
-    duplicateRows: duplicateRecords,
-    errorRows: errorRecords,
-    warningRows: 0,
-  };
-}
-
-function generateTrendData(startDate: string, days: number = 30) {
-  const trends = [];
-  const date = new Date(startDate);
-
-  for (let i = 0; i < days; i++) {
-    const baseRevenue = 150000 + Math.random() * 100000;
-    trends.push({
-      date: date.toISOString().split('T')[0],
-      revenue: Math.round(baseRevenue),
-      profit: Math.round(baseRevenue * 0.3),
-      margin: 0.3,
-    });
-    date.setDate(date.getDate() + 1);
-  }
-
-  return trends;
-}
-
-function generateAIInsights(): AIInsight[] {
-  return [
-    {
-      id: 'insight-001',
-      type: 'opportunity',
-      title: 'High-performing product identified',
-      message: 'Product SKU-1001 (Premium Coffee Beans) contributes 38% of total profit',
-      severity: 'low',
-      suggestedAction: 'Increase inventory allocation by 20%',
-      metric: 'profitContribution',
-      value: '38%',
-    },
-    {
-      id: 'insight-002',
-      type: 'warning',
-      title: 'Dead stock alert',
-      message: 'Dead stock value increased by 12% this month (now ₹85,000)',
-      severity: 'high',
-      suggestedAction: 'Review slow-moving inventory for markdowns',
-      metric: 'deadStock',
-      value: '₹85,000',
-    },
-    {
-      id: 'insight-003',
-      type: 'insight',
-      title: 'Marketplace performance disparity',
-      message: 'Flipkart orders have lowest margins (8%) vs Meesho (30%)',
-      severity: 'medium',
-      suggestedAction: 'Optimize Flipkart pricing strategy',
-      metric: 'marginComparison',
-      value: '8% vs 30%',
-    },
-    {
-      id: 'insight-004',
-      type: 'opportunity',
-      title: 'Revenue peak identified',
-      message: 'Revenue peaked on Tuesday, May 14 (₹22,500)',
-      severity: 'low',
-      suggestedAction: 'Analyze factors and replicate success patterns',
-      metric: 'revenuePeak',
-      value: '₹22,500',
-    },
-  ];
-}
-
 export const analyticsService = {
   /**
-   * Mock file upload - generates report with parsed data
+   * POST /analytics/upload - Upload report file
    */
   async uploadReport(file: File): Promise<AnalyticsReport> {
-    await delay(2000); // Simulate upload delay
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
 
-    const totalRecords = Math.floor(Math.random() * 800) + 200;
-    const records: ProductAnalyticsRecord[] = [];
-    const recordDate = new Date().toISOString().split('T')[0];
-
-    // Generate records across all marketplaces
-    for (let i = 0; i < totalRecords; i++) {
-      const product = mockProducts[i % mockProducts.length];
-      const marketplace = marketplaces[i % marketplaces.length];
-
-      records.push(
-        generateProductRecord(product.sku, product.name, marketplace, recordDate)
+      const response = await api.post<AnalyticsReport>(API_ENDPOINTS.UPLOAD, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      return response.data;
+    } catch (error) {
+      console.warn('[Analytics] Upload failed, using mock data:', error);
+      return mockResponse(
+        {
+          id: `report-${Date.now()}`,
+          fileName: file.name,
+          uploadedAt: new Date().toISOString(),
+          uploadedBy: 'admin@nexo.com',
+          status: 'completed' as const,
+          summary: {
+            totalRevenue: 450000,
+            totalProfit: 135000,
+            totalExpense: 90000,
+            averageMargin: 0.3,
+            totalRecords: 1000,
+            validRecords: 960,
+            updatedRecords: 30,
+            duplicateRecords: 20,
+            newProducts: 8,
+            channelBreakdown: marketplaces.map((m) => ({
+              marketplace: m,
+              revenue: 112500,
+              profit: 33750,
+              margin: 0.3,
+              quantity: 2500,
+              productCount: 20,
+            })),
+          },
+          records: [],
+          validationStats: {
+            totalRows: 1000,
+            validRows: 960,
+            duplicateRows: 20,
+            errorRows: 20,
+            warningRows: 0,
+          },
+        },
+        2000
       );
     }
-
-    const channelBreakdown = marketplaces.map((m) =>
-      generateChannelMetrics(m, totalRecords / 4)
-    );
-
-    const totalRevenue = records.reduce((sum, r) => sum + r.revenue, 0);
-    const totalProfit = records.reduce((sum, r) => sum + r.netProfit, 0);
-    const totalExpense = records.reduce((sum, r) => sum + r.expense, 0);
-    const avgMargin = totalRevenue > 0 ? totalProfit / totalRevenue : 0;
-    const validRecords = records.filter((r) => r.status === 'valid').length;
-
-    const report: AnalyticsReport = {
-      id: `report-${Date.now()}`,
-      fileName: file.name,
-      uploadedAt: new Date().toISOString(),
-      uploadedBy: 'admin@nexo.com',
-      status: 'completed',
-      summary: {
-        totalRevenue,
-        totalProfit,
-        totalExpense,
-        averageMargin: avgMargin,
-        totalRecords,
-        validRecords,
-        updatedRecords: Math.floor(totalRecords * 0.03),
-        duplicateRecords: Math.floor(totalRecords * 0.02),
-        newProducts: mockProducts.length,
-        channelBreakdown,
-      },
-      records: records.slice(0, 50), // Return first 50 for preview
-      validationStats: generateValidationStats(totalRecords),
-    };
-
-    return report;
   },
 
   /**
-   * Get all reports with pagination
+   * GET /analytics/reports - List all reports
    */
   async getReports(page = 0, size = 10): Promise<ReportListResponse> {
-    await delay(500);
-
-    const reports: AnalyticsReport[] = Array.from({ length: 5 }, (_, i) => {
-      const totalRecords = 1000 + Math.random() * 500;
-      const channelBreakdown = marketplaces.map((m) =>
-        generateChannelMetrics(m, totalRecords / 4)
-      );
-
-      return {
-        id: `report-${i}`,
-        fileName: `inventory-report-${i + 1}.xlsx`,
-        uploadedAt: new Date(Date.now() - i * 86400000).toISOString(),
-        uploadedBy: 'admin@nexo.com',
-        status: 'completed' as const,
-        summary: {
-          totalRevenue: 450000 + Math.random() * 100000,
-          totalProfit: 135000 + Math.random() * 50000,
-          totalExpense: 90000 + Math.random() * 30000,
-          averageMargin: 0.3,
-          totalRecords: Math.floor(totalRecords),
-          validRecords: Math.floor(totalRecords * 0.96),
-          updatedRecords: Math.floor(totalRecords * 0.03),
-          duplicateRecords: Math.floor(totalRecords * 0.02),
-          newProducts: 12,
-          channelBreakdown,
+    try {
+      const response = await api.get<ReportListResponse>(API_ENDPOINTS.REPORTS, {
+        params: { page, size },
+      });
+      return response.data;
+    } catch (error) {
+      console.warn('[Analytics] Get reports failed, using mock data:', error);
+      return mockResponse(
+        {
+          data: Array.from({ length: 5 }, (_, i) => ({
+            id: `report-${i}`,
+            fileName: `inventory-report-${i + 1}.xlsx`,
+            uploadedAt: new Date(Date.now() - i * 86400000).toISOString(),
+            uploadedBy: 'admin@nexo.com',
+            status: 'completed' as const,
+            summary: {
+              totalRevenue: 450000,
+              totalProfit: 135000,
+              totalExpense: 90000,
+              averageMargin: 0.3,
+              totalRecords: 1000,
+              validRecords: 960,
+              updatedRecords: 30,
+              duplicateRecords: 20,
+              newProducts: 8,
+              channelBreakdown: [],
+            },
+            records: [],
+            validationStats: {
+              totalRows: 1000,
+              validRows: 960,
+              duplicateRows: 20,
+              errorRows: 20,
+              warningRows: 0,
+            },
+          })),
+          pagination: { currentPage: page, pageSize: size, totalReports: 50, totalPages: 5 },
         },
-        records: [],
-        validationStats: generateValidationStats(Math.floor(totalRecords)),
-      };
-    });
-
-    return {
-      data: reports.slice(page * size, (page + 1) * size),
-      pagination: {
-        currentPage: page,
-        pageSize: size,
-        totalReports: 25,
-        totalPages: Math.ceil(25 / size),
-      },
-    };
+        500
+      );
+    }
   },
 
   /**
-   * Get specific report with pagination
+   * GET /analytics/reports/{id} - Get report details
    */
-  async getReportDetails(reportId: string, page = 0, size = 20): Promise<ReportDetailsResponse> {
-    await delay(500);
-
-    const totalRecords = 1250;
-    const records: ProductAnalyticsRecord[] = Array.from({ length: size }, (_, i) => {
-      const product = mockProducts[(page * size + i) % mockProducts.length];
-      const marketplace = marketplaces[(page * size + i) % marketplaces.length];
-      return generateProductRecord(
-        product.sku,
-        product.name,
-        marketplace,
-        new Date().toISOString().split('T')[0]
-      );
-    });
-
-    const channelBreakdown = marketplaces.map((m) =>
-      generateChannelMetrics(m, totalRecords / 4)
-    );
-
-    const allRecords = Array.from({ length: totalRecords }, (_, i) => {
-      const product = mockProducts[i % mockProducts.length];
-      const marketplace = marketplaces[i % marketplaces.length];
-      return generateProductRecord(
-        product.sku,
-        product.name,
-        marketplace,
-        new Date().toISOString().split('T')[0]
-      );
-    });
-
-    const totalRevenue = allRecords.reduce((sum, r) => sum + r.revenue, 0);
-    const totalProfit = allRecords.reduce((sum, r) => sum + r.netProfit, 0);
-    const totalExpense = allRecords.reduce((sum, r) => sum + r.expense, 0);
-
-    return {
-      data: {
-        id: reportId,
-        fileName: 'inventory-report.xlsx',
-        uploadedAt: new Date().toISOString(),
-        uploadedBy: 'admin@nexo.com',
-        status: 'completed',
-        records,
-        summary: {
-          totalRevenue,
-          totalProfit,
-          totalExpense,
-          averageMargin: totalProfit / totalRevenue,
-          totalRecords,
-          validRecords: Math.floor(totalRecords * 0.96),
-          updatedRecords: Math.floor(totalRecords * 0.03),
-          duplicateRecords: Math.floor(totalRecords * 0.02),
-          newProducts: 12,
-          channelBreakdown,
-        },
-        validationStats: generateValidationStats(totalRecords),
-      },
-      pagination: {
-        currentPage: page,
-        pageSize: size,
-        totalRecords,
-        totalPages: Math.ceil(totalRecords / size),
-      },
-    };
+  async getReportDetails(reportId: string): Promise<ReportDetailsResponse> {
+    try {
+      const response = await api.get<ReportDetailsResponse>(API_ENDPOINTS.REPORT_DETAILS(reportId));
+      return response.data;
+    } catch (error) {
+      console.error(`[Analytics] Get report details failed:`, error);
+      throw error;
+    }
   },
 
   /**
-   * Get analytics metrics (KPIs and trends)
+   * GET /analytics/metrics - Get KPI metrics and trends
    */
-  async getMetrics(
-    startDate: string,
-    endDate: string,
-    _marketplaces?: string[]
-  ): Promise<AnalyticsMetrics> {
-    await delay(800);
-
-    const trends = generateTrendData(startDate);
-    const topProducts = mockProducts.slice(0, 5).map((p) => ({
-      sku: p.sku,
-      productName: p.name,
-      revenue: generateRandomRevenue(30000, 80000),
-      profit: 0,
-      margin: 0.35,
-      quantity: Math.floor(Math.random() * 5000) + 1000,
-    }));
-
-    // Calculate profits
-    topProducts.forEach((p) => {
-      p.profit = p.revenue * 0.3;
-    });
-
-    const marketplaceMetrics = marketplaces.map((m) =>
-      generateChannelMetrics(m, Math.floor(Math.random() * 100) + 50)
-    );
-
-    const totalRevenue = marketplaceMetrics.reduce((sum, m) => sum + m.revenue, 0);
-    const totalProfit = marketplaceMetrics.reduce((sum, m) => sum + m.profit, 0);
-
-    return {
-      period: 'monthly',
-      dateRange: { start: startDate, end: endDate },
-      kpis: {
-        totalRevenue,
-        grossProfit: totalProfit * 1.2,
-        netProfit: totalProfit,
-        marginPercent: 0.3,
-        inventoryValue: totalRevenue * 1.15,
-        deadStockValue: totalRevenue * 0.12,
-      },
-      trends,
-      productMetrics: mockProducts.slice(0, 10).map((p) => ({
-        sku: p.sku,
-        productName: p.name,
-        revenue: generateRandomRevenue(10000, 40000),
-        profit: 0,
+  async getMetrics(startDate: string, endDate: string): Promise<AnalyticsMetrics> {
+    try {
+      const response = await api.get<AnalyticsMetrics>(API_ENDPOINTS.METRICS, {
+        params: { startDate, endDate },
+      });
+      return response.data;
+    } catch (error) {
+      console.warn('[Analytics] Get metrics failed, using mock data:', error);
+      const trends = Array.from({ length: 30 }, (_, i) => ({
+        date: new Date(Date.now() - (30 - i) * 86400000).toISOString().split('T')[0],
+        revenue: Math.round(150000 + Math.random() * 100000),
+        profit: Math.round((150000 + Math.random() * 100000) * 0.3),
         margin: 0.3,
-        quantity: Math.floor(Math.random() * 3000),
-        daysInStock: Math.floor(Math.random() * 90),
-      })),
-      marketplaceMetrics,
-      topProducts,
-      aiInsights: generateAIInsights(),
-    };
+      }));
+
+      return mockResponse(
+        {
+          period: 'monthly' as const,
+          dateRange: { start: startDate, end: endDate },
+          kpis: {
+            totalRevenue: 1500000,
+            grossProfit: 450000,
+            netProfit: 350000,
+            marginPercent: 0.3,
+            inventoryValue: 1725000,
+            deadStockValue: 180000,
+          },
+          trends,
+          productMetrics: mockProducts.slice(0, 10).map((p) => ({
+            sku: p.sku,
+            productName: p.name,
+            revenue: Math.random() * 40000 + 10000,
+            profit: 0,
+            margin: 0.3,
+            quantity: Math.floor(Math.random() * 3000),
+            daysInStock: Math.floor(Math.random() * 90),
+          })),
+          marketplaceMetrics: marketplaces.map((m) => ({
+            marketplace: m,
+            revenue: 375000,
+            profit: 112500,
+            margin: 0.3,
+            quantity: 7500,
+            productCount: 20,
+          })),
+          topProducts: mockProducts.slice(0, 5).map((p) => ({
+            sku: p.sku,
+            productName: p.name,
+            revenue: Math.random() * 80000 + 30000,
+            profit: 0,
+            margin: 0.35,
+            quantity: Math.floor(Math.random() * 5000) + 1000,
+          })),
+          aiInsights: [],
+        },
+        800
+      );
+    }
   },
 
   /**
-   * Get historical analytics data for grid
+   * GET /analytics/data - Get paginated historical data for grid
    */
-  async getHistoricalData(
-    page = 0,
-    size = 20,
-    _filters?: any
-  ): Promise<AnalyticsDataGridResponse> {
-    await delay(600);
+  async getHistoricalData(page = 0, size = 20, filters?: any): Promise<AnalyticsDataGridResponse> {
+    try {
+      const response = await api.get<AnalyticsDataGridResponse>(API_ENDPOINTS.HISTORICAL_DATA, {
+        params: { page, size, ...filters },
+      });
+      return response.data;
+    } catch (error) {
+      console.warn('[Analytics] Get historical data failed, using mock data:', error);
+      const records: AnalyticsDataGridRow[] = Array.from({ length: size }, (_, i) => {
+        const product = mockProducts[(page * size + i) % mockProducts.length];
+        const marketplace = marketplaces[(page * size + i) % marketplaces.length];
+        const revenue = Math.random() * 45000 + 5000;
+        const cogs = revenue * 0.4;
+        const expense = revenue * 0.15;
+        const grossProfit = revenue - cogs;
+        const netProfit = grossProfit - expense;
 
-    const totalRecords = 12500;
-    const records: AnalyticsDataGridRow[] = Array.from({ length: size }, (_, i) => {
-      const product = mockProducts[(page * size + i) % mockProducts.length];
-      const marketplace = marketplaces[(page * size + i) % marketplaces.length];
-      const revenue = generateRandomRevenue(5000, 50000);
-      const cogs = revenue * 0.4;
-      const expense = revenue * 0.15;
-      const grossProfit = revenue - cogs;
-      const netProfit = grossProfit - expense;
+        return {
+          id: `row-${page * size + i}`,
+          reportId: 'report-123',
+          sku: product.sku,
+          productName: product.name,
+          category: product.category,
+          marketplace,
+          revenue,
+          cogs,
+          expense,
+          quantity: Math.floor(revenue / 150),
+          grossProfit,
+          netProfit,
+          margin: netProfit / revenue,
+          recordDate: new Date().toISOString().split('T')[0],
+          daysInStock: Math.floor(Math.random() * 90) + 5,
+          status: 'valid' as const,
+        };
+      });
 
-      return {
-        id: `row-${page * size + i}`,
-        reportId: 'report-123',
-        sku: product.sku,
-        productName: product.name,
-        category: product.category,
-        marketplace,
-        revenue,
-        cogs,
-        expense,
-        quantity: Math.floor(revenue / 150),
-        grossProfit,
-        netProfit,
-        margin: netProfit / revenue,
-        recordDate: new Date().toISOString().split('T')[0],
-        daysInStock: Math.floor(Math.random() * 90) + 5,
-        status: 'valid',
-      };
-    });
-
-    const allRecords = Array.from({ length: totalRecords }, () => {
-      const revenue = generateRandomRevenue(5000, 50000);
-      const cogs = revenue * 0.4;
-      const expense = revenue * 0.15;
-      const grossProfit = revenue - cogs;
-      const netProfit = grossProfit - expense;
-
-      return {
-        revenue,
-        netProfit,
-        grossProfit,
-        cogs,
-        expense,
-      };
-    });
-
-    const totalRevenue = allRecords.reduce((sum, r) => sum + r.revenue, 0);
-    const totalProfit = allRecords.reduce((sum, r) => sum + r.netProfit, 0);
-
-    return {
-      data: records,
-      pagination: {
-        currentPage: page,
-        pageSize: size,
-        totalRecords,
-        totalPages: Math.ceil(totalRecords / size),
-      },
-      aggregates: {
-        totalRevenue,
-        totalProfit,
-        averageMargin: totalProfit / totalRevenue,
-        recordsCount: totalRecords,
-      },
-    };
+      return mockResponse(
+        {
+          data: records,
+          pagination: {
+            currentPage: page,
+            pageSize: size,
+            totalRecords: 12500,
+            totalPages: Math.ceil(12500 / size),
+          },
+          aggregates: {
+            totalRevenue: records.reduce((sum, r) => sum + r.revenue, 0),
+            totalProfit: records.reduce((sum, r) => sum + r.netProfit, 0),
+            averageMargin: 0.3,
+            recordsCount: size,
+          },
+        },
+        600
+      );
+    }
   },
 
   /**
-   * Get AI insights
+   * GET /analytics/insights - Get AI-generated insights
    */
   async getInsights(): Promise<InsightsResponse> {
-    await delay(400);
-    return {
-      insights: generateAIInsights(),
-    };
+    try {
+      const response = await api.get<InsightsResponse>(API_ENDPOINTS.INSIGHTS);
+      return response.data;
+    } catch (error) {
+      console.warn('[Analytics] Get insights failed, using mock data:', error);
+      return mockResponse(
+        {
+          insights: [
+            {
+              id: 'insight-001',
+              type: 'opportunity' as const,
+              title: 'High-performing product identified',
+              message: 'Product SKU-1001 (Premium Coffee Beans) contributes 38% of total profit',
+              severity: 'low' as const,
+              suggestedAction: 'Increase inventory allocation by 20%',
+            },
+          ],
+        },
+        400
+      );
+    }
   },
 
   /**
-   * Export data (mock - returns blob)
+   * POST /analytics/export - Export data in desired format
    */
-  async exportData(format: 'csv' | 'excel'): Promise<Blob> {
-    await delay(1000);
-
-    const csvContent = `SKU,Product,Marketplace,Revenue,Profit,Margin\nSKU-1001,Premium Coffee Beans,MEESHO,12500,5000,0.4\nSKU-1002,Portable Scanner,FLIPKART,22000,8000,0.36`;
-
-    return new Blob([csvContent], {
-      type: format === 'csv' ? 'text/csv' : 'application/vnd.ms-excel',
-    });
+  async exportData(format: 'csv' | 'excel', filters?: any): Promise<Blob> {
+    try {
+      const response = await api.post<Blob>(
+        API_ENDPOINTS.EXPORT,
+        { format, filters },
+        { responseType: 'blob' }
+      );
+      return response.data;
+    } catch (error) {
+      console.warn('[Analytics] Export failed, generating mock CSV:', error);
+      const csvContent = `SKU,Product,Marketplace,Revenue,Profit,Margin\nSKU-1001,Premium Coffee Beans,MEESHO,12500,5000,0.4\nSKU-1002,Portable Scanner,FLIPKART,22000,8000,0.36`;
+      return new Blob([csvContent], { type: 'text/csv' });
+    }
   },
 };
